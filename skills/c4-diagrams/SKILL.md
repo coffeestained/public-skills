@@ -65,7 +65,7 @@ Write `<output_dir>/c4/model.json` in this shape. Ids are short and stable.
 - `external: true` marks people and systems outside the boundary.
 - Relationships may point at components; the renderer rolls them up to the container and system levels.
 
-See `../../examples/model.json` for a complete one.
+A complete one: https://github.com/coffeestained/public-skills/blob/main/examples/model.json
 
 ## 4. Render
 
