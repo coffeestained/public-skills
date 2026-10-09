@@ -1,0 +1,117 @@
+{
+  "scope": "Pulse containers and their external flows",
+  "method": "STRIDE per element and per boundary-crossing flow",
+  "generated": "2026-10-09",
+  "threats": [
+    {
+      "id": "T1",
+      "category": "S",
+      "severity": "high",
+      "status": "mitigated",
+      "element": "api",
+      "flow": [
+        "web",
+        "api"
+      ],
+      "title": "Forged or replayed bearer token",
+      "description": "Every API route trusts the Authorization header. A token minted with a stolen signing key, or replayed after logout, grants full workspace access.",
+      "mitigation": "Auth Middleware verifies RS256 signatures against Auth0's JWKS, checks audience and expiry, and tokens live 15 minutes."
+    },
+    {
+      "id": "T2",
+      "category": "E",
+      "severity": "critical",
+      "status": "open",
+      "element": "api",
+      "title": "Channel ids are not checked against membership",
+      "description": "Messages Controller loads a channel by id from the path. A member of one workspace can post to any channel whose id they guess.",
+      "mitigation": "Resolve membership in Auth Middleware and reject requests for channels outside the caller's workspaces."
+    },
+    {
+      "id": "T3",
+      "category": "I",
+      "severity": "high",
+      "status": "open",
+      "element": "rt",
+      "flow": [
+        "web",
+        "rt"
+      ],
+      "title": "WebSocket subscriptions are not re-authorised",
+      "description": "Real-time Service validates the token at connect time only. A user removed from a channel keeps receiving its messages until they reconnect.",
+      "mitigation": "Re-check membership on each fan-out, or drop subscriptions when a membership-removed event arrives."
+    },
+    {
+      "id": "T4",
+      "category": "D",
+      "severity": "medium",
+      "status": "open",
+      "element": "rt",
+      "title": "Unbounded connections per user",
+      "description": "Nothing limits how many sockets one account can hold open. A script can exhaust the instance's file descriptors.",
+      "mitigation": "Cap connections per user and per IP; close idle sockets after a timeout."
+    },
+    {
+      "id": "T5",
+      "category": "T",
+      "severity": "medium",
+      "status": "mitigated",
+      "element": "events",
+      "flow": [
+        "api",
+        "events"
+      ],
+      "title": "Spoofed events on the queue",
+      "description": "Anything that can write to the SQS queue can inject a message that every subscriber sees as genuine.",
+      "mitigation": "Only the API's instance role has sqs:SendMessage; the queue policy denies all other principals."
+    },
+    {
+      "id": "T6",
+      "category": "R",
+      "severity": "low",
+      "status": "accepted",
+      "element": "api",
+      "title": "Message edits are not audited",
+      "description": "Editing or deleting a message overwrites the row. There is no record of who changed what.",
+      "mitigation": "Accepted for now: product does not expose edit history. Revisit if compliance customers ask."
+    },
+    {
+      "id": "T7",
+      "category": "I",
+      "severity": "high",
+      "status": "open",
+      "element": "db",
+      "title": "Messages stored in plaintext across two regions",
+      "description": "API Database replicates to us-east-1 with default encryption only. Anyone with read access to either table reads every message.",
+      "mitigation": "Use a customer-managed KMS key per environment and restrict table read to the API and Real-time roles."
+    },
+    {
+      "id": "T8",
+      "category": "S",
+      "severity": "medium",
+      "status": "mitigated",
+      "element": "web",
+      "flow": [
+        "web",
+        "auth0"
+      ],
+      "title": "Login redirect to a look-alike identity provider",
+      "description": "If the OIDC redirect were attacker-controlled, the browser would hand the authorisation code to the wrong party.",
+      "mitigation": "Auth0 only honours the allow-listed callback URL; the SPA uses PKCE so a captured code is useless without the verifier."
+    },
+    {
+      "id": "T9",
+      "category": "D",
+      "severity": "low",
+      "status": "open",
+      "element": "ses",
+      "flow": [
+        "api",
+        "ses"
+      ],
+      "title": "Invite spam burns the SES sending quota",
+      "description": "The invite endpoint sends one email per call with no limit, so a user can exhaust the daily quota and block real invites.",
+      "mitigation": "Rate-limit invites per workspace per hour."
+    }
+  ]
+}

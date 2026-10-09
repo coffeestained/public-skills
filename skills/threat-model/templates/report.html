@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Threat model</title>
+<style>
+/* Light mode only, same palette as the c4-diagrams skill so the two reports sit side by side. */
+:root {
+  --bg: #f5f6f8; --card: #ffffff; --ink: #1b2330; --muted: #5f6b7a; --line: #d9dee6;
+  --boundary: #eef2f8; --boundary-line: #b9c4d4;
+  --shadow: 0 1px 2px rgba(16,24,40,.05), 0 6px 16px rgba(16,24,40,.07);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+a { color: inherit; }
+header { padding: 22px 24px 6px; }
+header h1 { margin: 0; font-size: 20px; }
+header .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 10px 24px 0; font-size: 12px; color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 600; margin-right: 4px; }
+nav.crumbs { padding: 6px 24px 0; font-size: 12px; color: var(--muted); }
+section { padding: 20px 24px 0; }
+section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 10px; }
+
+/* Summary tiles: one per severity, plus open vs mitigated. */
+.tiles { display: flex; flex-wrap: wrap; gap: 12px; }
+.tile { background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 10px 16px; min-width: 110px; }
+.tile .n { font-size: 22px; font-weight: 700; line-height: 1.1; }
+.tile .l { font-size: 11.5px; color: var(--muted); }
+.tile.critical .n { color: #b42318; } .tile.high .n { color: #c4320a; } .tile.medium .n { color: #b54708; } .tile.low .n { color: #067647; }
+
+/* Flows table. */
+table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; font-size: 12.5px; }
+th, td { text-align: left; padding: 8px 10px; border-top: 1px solid #eef1f5; vertical-align: top; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: #fafbfc; border-top: 0; }
+td .tech { color: var(--muted); font-size: 11px; }
+td .arrow { color: var(--muted); margin: 0 4px; }
+.wrap { border-radius: 10px; overflow: auto; }
+
+/* Element cards, as in the C4 diagrams, each followed by its threats. */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 18px; }
+.block { background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); padding: 14px; break-inside: avoid; }
+.block.external { border-style: dashed; background: #fbfbfc; }
+.head { display: flex; align-items: center; gap: 10px; }
+.tile-ic { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; color: #fff; }
+.tile-ic svg { width: 20px; height: 20px; }
+.name { font-weight: 700; font-size: 15px; line-height: 1.2; }
+.type { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.desc { font-size: 12.5px; margin-top: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 5px; border: 1px solid; white-space: nowrap; }
+.chip svg { width: 11px; height: 11px; }
+.chip.tech   { color: #9a4a0b; background: #fff3e8; border-color: #f3c7a0; }
+.chip.region { color: #1d4ed8; background: #eaf0ff; border-color: #b7c7fb; }
+.chip.env    { color: #92400e; background: #fff8e1; border-color: #f2d58a; }
+.chip.team   { color: #166534; background: #ecfdf3; border-color: #a7e3bd; }
+.chip.risk   { color: #b42318; background: #fef3f2; border-color: #f4b6b0; }
+.chip.other  { color: #475467; background: #f2f4f7; border-color: #d0d5dd; }
+/* STRIDE categories, one colour each. */
+.chip.S { color: #5b21b6; background: #f3eeff; border-color: #cdbdf7; }
+.chip.T { color: #9a4a0b; background: #fff3e8; border-color: #f3c7a0; }
+.chip.R { color: #344054; background: #f2f4f7; border-color: #d0d5dd; }
+.chip.I { color: #1d4ed8; background: #eaf0ff; border-color: #b7c7fb; }
+.chip.D { color: #b42318; background: #fef3f2; border-color: #f4b6b0; }
+.chip.E { color: #9f1239; background: #fff1f3; border-color: #f9b4c2; }
+/* Severity and status. */
+.chip.critical { color: #fff; background: #b42318; border-color: #b42318; }
+.chip.high { color: #b42318; background: #fef3f2; border-color: #f4b6b0; }
+.chip.medium { color: #92400e; background: #fff8e1; border-color: #f2d58a; }
+.chip.low { color: #166534; background: #ecfdf3; border-color: #a7e3bd; }
+.status { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+.status i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: #98a2b3; }
+.status.open i { background: #d92d20; } .status.mitigated i { background: #36b37e; }
+
+.threats { margin-top: 10px; border-top: 1px solid #eef1f5; }
+.threat { padding: 9px 0; border-bottom: 1px solid #eef1f5; }
+.threat .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.threat .row b { font-size: 13px; }
+.threat .id { color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.threat p { margin: 4px 0 0; font-size: 12px; color: var(--ink); }
+.threat .mit { color: var(--muted); }
+.threat .mit b { color: var(--ink); font-weight: 600; }
+.none { color: var(--muted); font-size: 12px; margin-top: 10px; }
+
+.k-person { background: #6c5ce7; } .k-system { background: #2f6fed; } .k-external { background: #6b7280; }
+.k-app { background: #e8822a; } .k-web { background: #1f9ad6; } .k-mobile { background: #1f9ad6; }
+.k-store { background: #3b9c5c; } .k-queue { background: #c99700; } .k-function { background: #d9532b; } .k-component { background: #4b7bec; }
+
+.legend { margin: 24px 24px 28px; display: inline-block; border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 10px 14px; box-shadow: var(--shadow); font-size: 12px; }
+.legend h2 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.legend .items { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+footer { padding: 0 24px 24px; color: var(--muted); font-size: 11px; }
+@media print { body { background: #fff; } .block, .tile, table, .legend { box-shadow: none; } @page { margin: 12mm; } }
+</style>
+</head>
+<body>
+<header><h1 id="title"></h1><div class="sub" id="subtitle"></div></header>
+<nav class="crumbs"><a href="../c4/index.html">C4 diagrams</a> › Threat model</nav>
+<div class="meta" id="meta"></div>
+<section><h2>Summary</h2><div class="tiles" id="tiles"></div></section>
+<section><h2>Data flows that cross a trust boundary</h2><div class="wrap" id="flows"></div></section>
+<section><h2>Threats by element</h2><div class="grid" id="grid"></div></section>
+<section class="legend" id="legend"></section>
+<footer id="footer"></footer>
+<script>
+// The agent replaces the two placeholders: MODEL is the C4 model.json, THREATS is threats.json.
+const MODEL = /*__MODEL__*/{};
+const THREATS = /*__THREATS__*/{ "threats": [] };
+
+const ICON = {
+  person: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
+  system: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>',
+  external: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 12h8M13 9l3 3-3 3"/></svg>',
+  app: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
+  web: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></svg>',
+  mobile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>',
+  store: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
+  queue: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="4" height="10"/><rect x="10" y="7" width="4" height="10"/><rect x="17" y="7" width="4" height="10"/></svg>',
+  function: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+  component: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="4" width="14" height="7" rx="1.5"/><rect x="7" y="13" width="14" height="7" rx="1.5"/><path d="M3 7.5h4M3 16.5h4"/></svg>',
+  tech: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
+  region: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+  env: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5"/></svg>',
+  team: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-4 3-6 6-6s6 2 6 6M15 19c0-3 2-4 4-4s3 1 3 4"/></svg>',
+  risk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3l10 18H2L12 3zM12 10v5M12 18h.01"/></svg>',
+  other: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12l8-8h8v8l-8 8z"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/></svg>'
+};
+const STRIDE = { S: "Spoofing", T: "Tampering", R: "Repudiation", I: "Information disclosure", D: "Denial of service", E: "Elevation of privilege" };
+const TYPE_LABEL = { person: "Person", system: "Software System", container: "Container", component: "Component" };
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const els = MODEL.elements || [], byId = Object.fromEntries(els.map(e => [e.id, e]));
+const system = els.find(e => e.type === "system" && !e.external) || { id: "system", name: MODEL.project || "System" };
+const kindOf = e => e.type === "person" ? "person" : e.type === "system" ? (e.external ? "external" : "system") : e.type === "component" ? "component" : (e.kind || "app");
+// Trust zones: people, the client device, the backend, and each external party. A flow between two zones crosses a boundary.
+const zoneOf = e => e.type === "person" ? "People" : e.external ? "External: " + e.name : ["web", "mobile"].includes(e.kind) ? "Client device" : system.name + " backend";
+const container = id => { let e = byId[id]; while (e && e.type === "component") e = byId[e.parent]; return e; };
+const sevKey = s => String(s || "medium").toLowerCase();
+const threats = (THREATS.threats || []).map((t, i) => ({ id: t.id || "T" + (i + 1), ...t }));
+const chip = (cls, text, icon) => `<span class="chip ${cls}">${icon ? ICON[icon] || "" : ""}${esc(text)}</span>`;
+const tagChip = tag => { const [cat, ...rest] = String(tag).includes(":") ? String(tag).split(":") : ["other", tag]; const c = ICON[cat] ? cat : "other"; return chip(c, rest.join(":").trim(), c); };
+const threatRow = t => `<div class="threat">
+  <div class="row"><span class="id">${esc(t.id)}</span>${chip(t.category, STRIDE[t.category] || t.category)}${chip(sevKey(t.severity), t.severity || "Medium")}<b>${esc(t.title)}</b>
+    <span class="status ${esc(t.status || "open")}"><i></i>${esc(t.status || "open")}</span></div>
+  ${t.description ? `<p>${esc(t.description)}</p>` : ""}
+  ${t.mitigation ? `<p class="mit"><b>Mitigation</b> ${esc(t.mitigation)}</p>` : ""}
+</div>`;
+
+function render() {
+  document.title = `Threat model: ${system.name}`;
+  document.getElementById("title").textContent = `Threat model: ${system.name}`;
+  document.getElementById("subtitle").textContent = (MODEL.project ? MODEL.project + " · " : "") + (MODEL.description || "");
+  document.getElementById("meta").innerHTML = `<span><b>Scope</b>${esc(THREATS.scope || "Containers and the flows between them")}</span><span><b>Method</b>${esc(THREATS.method || "STRIDE per element and per boundary-crossing flow")}</span><span><b>Audience</b>Developers, security reviewers</span>`;
+  // Summary tiles.
+  const count = k => threats.filter(t => sevKey(t.severity) === k).length;
+  document.getElementById("tiles").innerHTML = ["critical", "high", "medium", "low"].map(k => `<div class="tile ${k}"><div class="n">${count(k)}</div><div class="l">${k[0].toUpperCase() + k.slice(1)}</div></div>`).join("")
+    + `<div class="tile"><div class="n">${threats.filter(t => (t.status || "open") === "open").length}</div><div class="l">Open</div></div><div class="tile"><div class="n">${threats.filter(t => t.status === "mitigated").length}</div><div class="l">Mitigated</div></div>`;
+  // Flows that cross a boundary, rolled up to container level and merged per pair.
+  const merged = new Map();
+  for (const r of MODEL.relationships || []) {
+    const a = container(r.from), b = container(r.to); if (!a || !b || a === b) continue;
+    const k = a.id + "→" + b.id, m = merged.get(k) || { from: a, to: b, labels: [], techs: [] };
+    if (r.label && !m.labels.includes(r.label)) m.labels.push(r.label);
+    if (r.technology && !m.techs.includes(r.technology)) m.techs.push(r.technology);
+    merged.set(k, m);
+  }
+  const flows = [...merged.values()].filter(f => zoneOf(f.from) !== zoneOf(f.to));
+  const flowThreats = f => threats.filter(t => t.flow && container(t.flow[0]) === f.from && container(t.flow[1]) === f.to);
+  document.getElementById("flows").innerHTML = flows.length ? `<table><tr><th>#</th><th>Flow</th><th>Intent</th><th>Boundary</th><th>Threats</th></tr>` + flows.map((f, i) => {
+    const ts = flowThreats(f);
+    return `<tr><td>${i + 1}</td><td><b>${esc(f.from.name)}</b><span class="arrow">→</span><b>${esc(f.to.name)}</b></td>
+      <td>${esc(f.labels.join(" / ") || "Uses")}<div class="tech">[${esc(f.techs.join(", ") || "unspecified")}]</div></td>
+      <td>${esc(zoneOf(f.from))}<span class="arrow">→</span>${esc(zoneOf(f.to))}</td>
+      <td>${ts.length ? ts.map(t => chip(t.category, t.id + " " + STRIDE[t.category])).join(" ") : '<span class="tech">none recorded</span>'}</td></tr>`;
+  }).join("") + `</table>` : `<div class="none">No boundary-crossing flows in the model.</div>`;
+  // One block per container, person and external system, with its threats and the threats on its flows.
+  const shown = els.filter(e => e.type !== "component" && !(e.type === "system" && !e.external));
+  document.getElementById("grid").innerHTML = shown.map(e => {
+    const kind = kindOf(e);
+    const mine = threats.filter(t => container(t.element) === e || (!t.element && t.flow && (container(t.flow[0]) === e || container(t.flow[1]) === e)));
+    return `<div class="block ${e.external ? "external" : ""}">
+      <div class="head"><div class="tile-ic k-${kind}">${ICON[kind]}</div><div><div class="name">${esc(e.name)}</div><div class="type">[${esc(TYPE_LABEL[e.type])}${e.technology ? ": " + esc(e.technology) : ""}] · ${esc(zoneOf(e))}</div></div></div>
+      ${e.description ? `<div class="desc">${esc(e.description)}</div>` : ""}
+      ${(e.tags || []).length ? `<div class="chips">${e.tags.map(tagChip).join("")}</div>` : ""}
+      ${mine.length ? `<div class="threats">${mine.map(threatRow).join("")}</div>` : `<div class="none">No threats recorded.</div>`}
+    </div>`;
+  }).join("");
+  document.getElementById("legend").innerHTML = `<h2>Key</h2><div class="items">
+    ${Object.entries(STRIDE).map(([k, v]) => chip(k, k + " = " + v)).join("")}
+    ${["critical", "high", "medium", "low"].map(k => chip(k, k[0].toUpperCase() + k.slice(1))).join("")}
+    <span class="status open"><i></i>open</span><span class="status mitigated"><i></i>mitigated</span><span class="status accepted"><i></i>accepted</span>
+  </div>`;
+  document.getElementById("footer").textContent = `Generated ${THREATS.generated || MODEL.generated || new Date().toISOString().slice(0, 10)} · ${threats.length} threats · ${flows.length} boundary-crossing flows`;
+}
+render();
+</script>
+</body>
+</html>

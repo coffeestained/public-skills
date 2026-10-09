@@ -9,7 +9,9 @@ Agent skills that work in Claude Code, Cursor, GitHub Copilot and Codex. Each sk
 
 ![C4 container diagram rendered by the c4-diagrams skill](examples/preview.png)
 
-Open [`examples/index.html`](examples/index.html) for the full sample set.
+Open [`examples/index.html`](examples/index.html) for the full sample set, and [`examples/threat-model/index.html`](examples/threat-model/index.html) for the matching threat model.
+
+![STRIDE threat model rendered by the threat-model skill](examples/threat-model/preview.png)
 
 ## Runbook
 
@@ -26,7 +28,7 @@ cp ../public-skills/skills/c4-diagrams/config.json.example config.json  # option
 open outputs/c4/index.html
 ```
 
-Swap `c4-diagrams` for `threat-model` to install the other skill. A symlink works too.
+Swap `c4-diagrams` for `threat-model` to install the other skill. A symlink works too. `threat-model` reads `outputs/c4/model.json`, so run `c4-diagrams` first.
 
 ## License
 
