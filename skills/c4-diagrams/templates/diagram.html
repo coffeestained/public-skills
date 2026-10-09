@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C4 diagram</title>
+<style>
+/* Light mode only. These are documents: they get printed and pasted into wikis. */
+:root {
+  --bg: #f5f6f8; --card: #ffffff; --ink: #1b2330; --muted: #5f6b7a; --line: #d9dee6;
+  --wire: #7a8798; --boundary: #eef2f8; --boundary-line: #b9c4d4;
+  --shadow: 0 1px 2px rgba(16,24,40,.05), 0 6px 16px rgba(16,24,40,.07);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+a { color: inherit; }
+header { padding: 22px 24px 6px; }
+header h1 { margin: 0; font-size: 20px; }
+header .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+/* Scope / primary / audience: C4 asks every diagram to say what it covers and for whom. */
+.meta { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 10px 24px 0; font-size: 12px; color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 600; margin-right: 4px; }
+nav.crumbs { padding: 6px 24px 0; font-size: 12px; color: var(--muted); }
+
+/* Diagram: a positioned stage so SVG wires can sit over the cards. */
+.stage { position: relative; padding: 18px 24px 24px; --gap: 90px; }
+/* Wires sit above the cards; label pills are opaque so they still read where they cross. */
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 3; }
+.row { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px 40px; }
+.row.people { margin-bottom: calc(var(--gap) - 16px); }
+.mid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 150px; align-items: start; }
+.mid.no-side { grid-template-columns: minmax(0, 1fr); }
+.boundary { position: relative; border: 1.5px dashed var(--boundary-line); border-radius: 12px;
+  background: var(--boundary); padding: 40px 28px 28px; }
+.boundary .blabel { position: absolute; top: 10px; left: 14px; font-size: 12px; color: var(--muted); }
+.boundary .blabel b { color: var(--ink); font-weight: 600; }
+.layers { display: flex; flex-direction: column; gap: var(--gap); }
+.layer { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px 44px; }
+.side { display: flex; flex-direction: column; gap: var(--gap); padding-top: 8px; }
+.side .slabel { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: -22px; }
+@media (max-width: 860px) {
+  .mid { grid-template-columns: minmax(0, 1fr); gap: var(--gap); }
+  .row, .layer { gap: 28px; }
+  .boundary { padding: 40px 14px 20px; }
+}
+
+/* Element card: icon, name, [Type: Tech], description, chips. */
+.card { position: relative; width: 250px; max-width: 100%; background: var(--card); border: 1px solid var(--line);
+  border-radius: 10px; box-shadow: var(--shadow); padding: 26px 14px 12px; }
+.card.person { border-radius: 16px 16px 10px 10px; }
+.card.external { border-style: dashed; background: #fbfbfc; }
+.card .badge { position: absolute; top: 7px; font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.card .badge.tl { left: 10px; } .card .badge.tr { right: 10px; }
+.card .badge a { text-decoration: none; color: inherit; }
+.card .badge svg { width: 12px; height: 12px; }
+.card .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #36b37e; display: inline-block; }
+.card .head { display: flex; align-items: center; gap: 10px; }
+.card .tile { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; color: #fff; }
+.card .tile svg { width: 20px; height: 20px; }
+.card .name { font-weight: 700; font-size: 15px; line-height: 1.2; }
+.card .type { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.card .desc { color: var(--ink); font-size: 12.5px; margin-top: 8px; }
+.card .foot { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.card .lock { color: #9aa5b4; width: 13px; height: 13px; margin-left: auto; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eef1f5; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 7px;
+  border-radius: 5px; border: 1px solid; }
+.chip svg { width: 11px; height: 11px; }
+/* One colour per chip category, all readable on white. */
+.chip.tech   { color: #9a4a0b; background: #fff3e8; border-color: #f3c7a0; }
+.chip.region { color: #1d4ed8; background: #eaf0ff; border-color: #b7c7fb; }
+.chip.env    { color: #92400e; background: #fff8e1; border-color: #f2d58a; }
+.chip.team   { color: #166534; background: #ecfdf3; border-color: #a7e3bd; }
+.chip.risk   { color: #b42318; background: #fef3f2; border-color: #f4b6b0; }
+.chip.other  { color: #475467; background: #f2f4f7; border-color: #d0d5dd; }
+
+/* Tile colours by element kind. Matches the legend. */
+.k-person { background: #6c5ce7; } .k-system { background: #2f6fed; } .k-external { background: #6b7280; }
+.k-app { background: #e8822a; } .k-web { background: #1f9ad6; } .k-mobile { background: #1f9ad6; }
+.k-store { background: #3b9c5c; } .k-queue { background: #c99700; } .k-function { background: #d9532b; }
+.k-component { background: #4b7bec; }
+
+/* Wires: orthogonal, one arrowhead, label in a white pill. */
+.wire { fill: none; stroke: var(--wire); stroke-width: 1.4; }
+.wlabel-bg { fill: #fff; stroke: var(--line); rx: 4; }
+.wlabel { font-size: 11px; fill: var(--ink); }
+.wlabel.tech { fill: var(--muted); font-size: 10px; }
+
+/* Key. */
+.legend { margin: 8px 24px 28px; display: inline-block; border: 1px solid var(--line); background: var(--card);
+  border-radius: 10px; padding: 10px 14px; box-shadow: var(--shadow); font-size: 12px; }
+.legend h2 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.legend .items { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.legend .tile { width: 18px; height: 18px; border-radius: 4px; display: inline-grid; place-items: center; color: #fff; vertical-align: middle; margin-right: 5px; }
+.legend .tile svg { width: 11px; height: 11px; }
+.legend .arrow { display: inline-block; width: 40px; height: 1.4px; background: var(--wire); position: relative; vertical-align: middle; margin-right: 6px; }
+.legend .arrow::after { content: ""; position: absolute; right: -1px; top: -4px; border: 5px solid transparent; border-left: 7px solid var(--wire); }
+footer { padding: 0 24px 24px; color: var(--muted); font-size: 11px; }
+@media print {
+  body { background: #fff; }
+  .card, .legend { box-shadow: none; }
+  @page { margin: 12mm; }
+}
+</style>
+</head>
+<body>
+<header><h1 id="title"></h1><div class="sub" id="subtitle"></div></header>
+<nav class="crumbs" id="crumbs"></nav>
+<div class="meta" id="meta"></div>
+<main class="stage" id="stage"><svg class="wires" id="wires"></svg></main>
+<section class="legend" id="legend"></section>
+<footer id="footer"></footer>
+<script>
+// The agent replaces the two placeholders. MODEL is the whole model.json;
+// VIEW picks what this page shows, e.g. {"level":"container"} or {"level":"component","container":"api"}.
+const MODEL = /*__MODEL__*/{};
+const VIEW = /*__VIEW__*/{ "level": "context" };
+
+const ICON = {
+  person: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
+  system: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>',
+  external: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 12h8M13 9l3 3-3 3"/></svg>',
+  app: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
+  web: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></svg>',
+  mobile: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>',
+  store: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>',
+  queue: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="4" height="10"/><rect x="10" y="7" width="4" height="10"/><rect x="17" y="7" width="4" height="10"/></svg>',
+  function: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+  component: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="4" width="14" height="7" rx="1.5"/><rect x="7" y="13" width="14" height="7" rx="1.5"/><path d="M3 7.5h4M3 16.5h4"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>',
+  zoom: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5M11 8v6M8 11h6"/></svg>',
+  // chip category icons
+  tech: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
+  region: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
+  env: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5"/></svg>',
+  team: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-4 3-6 6-6s6 2 6 6M15 19c0-3 2-4 4-4s3 1 3 4"/></svg>',
+  risk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3l10 18H2L12 3zM12 10v5M12 18h.01"/></svg>',
+  other: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12l8-8h8v8l-8 8z"/></svg>'
+};
+const TYPE_LABEL = { person: "Person", system: "Software System", container: "Container", component: "Component" };
+const KIND_LABEL = { person: "Person", system: "Software System", external: "External System", app: "Application",
+  web: "Web App", mobile: "Mobile App", store: "Data Store", queue: "Queue / Topic", function: "Function", component: "Component" };
+const LEVELS = {
+  context: { title: "System Context diagram", scope: "The whole software system", primary: "The software system",
+    supporting: "People and external systems that use or are used by it", audience: "Everyone, technical or not" },
+  container: { title: "Container diagram", scope: "Inside the system boundary", primary: "Containers (apps and data stores)",
+    supporting: "People and external systems connected to them", audience: "Developers, architects, operations" },
+  component: { title: "Component diagram", scope: "Inside one container", primary: "Components of that container",
+    supporting: "Containers, people and systems they talk to", audience: "Developers and architects" }
+};
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const els = MODEL.elements || [];
+const byId = Object.fromEntries(els.map(e => [e.id, e]));
+const system = els.find(e => e.type === "system" && !e.external) || { id: "system", name: MODEL.project || "System" };
+const parentOf = id => byId[id] && byId[id].parent;
+const kindOf = e => e.type === "person" ? "person" : e.type === "system" ? (e.external ? "external" : "system")
+  : e.type === "component" ? "component" : (e.kind || "app");
+
+// Roll an endpoint up to the abstraction this view shows. A relationship recorded
+// against a component is still a relationship of its container at the container level.
+function rollUp(id, level) {
+  let e = byId[id]; if (!e) return id;
+  if (level === "context") { while (e && (e.type === "component" || e.type === "container")) e = byId[e.parent]; return e ? e.id : system.id; }
+  if (level === "container") { if (e.type === "component") return e.parent; }
+  if (level === "component") { if (e.type === "component" && e.parent !== VIEW.container) return e.parent; }
+  return e.id;
+}
+
+// Decide what this page shows: people on top, the boundary in the middle, supporting systems at the side.
+function buildView() {
+  const level = VIEW.level || "context";
+  const people = els.filter(e => e.type === "person");
+  const externals = els.filter(e => e.type === "system" && e.external);
+  let inside, boundary, side, crumbs;
+  if (level === "context") {
+    inside = [system]; boundary = null; side = externals;
+  } else if (level === "container") {
+    inside = els.filter(e => e.type === "container" && e.parent === system.id);
+    boundary = { label: system.name, type: "Software System" }; side = externals;
+  } else {
+    const c = byId[VIEW.container] || {};
+    inside = els.filter(e => e.type === "component" && e.parent === c.id);
+    boundary = { label: c.name, type: "Container" + (c.technology ? ": " + c.technology : "") };
+    side = [];  // filled below: only the neighbours that actually connect to a component
+  }
+  // Collapse relationships to this level and merge duplicates between the same pair.
+  const merged = new Map();
+  for (const r of MODEL.relationships || []) {
+    const from = rollUp(r.from, level), to = rollUp(r.to, level);
+    if (from === to) continue;
+    if (level === "component") { const ins = new Set(inside.map(e => e.id)); if (!ins.has(from) && !ins.has(to)) continue; }
+    const k = from + "→" + to, m = merged.get(k) || { from, to, labels: [], techs: [] };
+    if (r.label && !m.labels.includes(r.label)) m.labels.push(r.label);
+    if (r.technology && !m.techs.includes(r.technology)) m.techs.push(r.technology);
+    merged.set(k, m);
+  }
+  let edges = [...merged.values()];
+  if (level === "component") {
+    const ins = new Set(inside.map(e => e.id)), seen = new Set();
+    for (const e of edges) for (const id of [e.from, e.to]) if (!ins.has(id) && byId[id] && !seen.has(id)) { seen.add(id); if (byId[id].type !== "person") side.push(byId[id]); }
+    crumbs = `<a href="index.html">Index</a> › <a href="container.html">Containers</a> › ${esc(c(VIEW.container).name)}`;
+  } else crumbs = `<a href="index.html">Index</a> › ${esc(LEVELS[level].title)}`;
+  const visible = new Set([...people, ...inside, ...side].map(e => e.id));
+  edges = edges.filter(e => visible.has(e.from) && visible.has(e.to));
+  const peopleShown = people.filter(p => level === "context" || edges.some(e => e.from === p.id || e.to === p.id));
+  return { level, people: peopleShown, inside, boundary, side, edges, crumbs };
+  function c(id) { return byId[id] || { name: id }; }
+}
+
+// Rank the inside elements into layers so arrows mostly flow downward: entry points first.
+function layers(inside, edges) {
+  const ids = new Set(inside.map(e => e.id)), rank = new Map();
+  const preds = id => edges.filter(e => e.to === id && ids.has(e.from)).map(e => e.from);
+  const fromOutside = id => edges.some(e => e.to === id && !ids.has(e.from));
+  let queue = inside.filter(e => fromOutside(e.id) || preds(e.id).length === 0).map(e => e.id);
+  if (!queue.length) queue = [inside[0].id];
+  queue.forEach(id => rank.set(id, 0));
+  for (let i = 0; i < queue.length; i++) for (const e of edges) if (e.from === queue[i] && ids.has(e.to) && !rank.has(e.to)) { rank.set(e.to, rank.get(queue[i]) + 1); queue.push(e.to); }
+  const max = Math.max(0, ...rank.values());
+  inside.forEach(e => { if (!rank.has(e.id)) rank.set(e.id, max + 1); });
+  const out = []; inside.forEach(e => (out[rank.get(e.id)] ||= []).push(e)); return out.filter(Boolean);
+}
+
+function chip(tag) {
+  const [cat, ...rest] = String(tag).includes(":") ? String(tag).split(":") : ["other", tag];
+  const c = ICON[cat] ? cat : "other";
+  return `<span class="chip ${c}">${ICON[c]}${esc(rest.join(":").trim())}</span>`;
+}
+function card(e, view) {
+  const kind = kindOf(e), external = !!e.external;
+  const comps = els.filter(x => x.type === "component" && x.parent === e.id).length;
+  const rels = view.edges.filter(r => r.from === e.id || r.to === e.id).length;
+  const typeLine = TYPE_LABEL[e.type] + (e.technology ? ": " + e.technology : "");
+  const pages = VIEW.componentPages || [];
+  const zoom = comps && e.type === "container" ? `<span class="badge tl" title="${comps} components">${pages.includes(e.id) ? `<a href="component-${esc(e.id)}.html">${ICON.zoom}</a>` : ICON.zoom} ${comps}</span>` : "";
+  const internal = e.type !== "person" && !external;
+  return `<div class="card ${kind}${external ? " external" : ""}" data-id="${esc(e.id)}">
+    ${zoom}<span class="badge tr" title="${rels} relationships on this diagram"><span class="dot"></span>${rels}</span>
+    <div class="head"><div class="tile k-${kind}">${ICON[kind]}</div><div><div class="name">${esc(e.name)}</div><div class="type">[${esc(typeLine)}]</div></div></div>
+    ${e.description ? `<div class="desc">${esc(e.description)}</div>` : ""}
+    <div class="foot"><span class="type">${esc(KIND_LABEL[kind])}</span>${internal ? `<span class="lock" title="Inside the system boundary">${ICON.lock}</span>` : ""}</div>
+    ${(e.tags || []).length ? `<div class="chips">${e.tags.map(chip).join("")}</div>` : ""}
+  </div>`;
+}
+
+function render() {
+  const v = buildView(), L = LEVELS[v.level];
+  const scopeName = v.level === "component" ? (byId[VIEW.container] || {}).name : system.name;
+  document.title = `${L.title}: ${scopeName}`;
+  document.getElementById("title").textContent = `${L.title}: ${scopeName}`;
+  document.getElementById("subtitle").textContent = (MODEL.project ? MODEL.project + " · " : "") + (MODEL.description || "");
+  document.getElementById("crumbs").innerHTML = v.crumbs;
+  document.getElementById("meta").innerHTML =
+    `<span><b>Scope</b>${esc(L.scope)}</span><span><b>Primary</b>${esc(L.primary)}</span><span><b>Supporting</b>${esc(L.supporting)}</span><span><b>Audience</b>${esc(L.audience)}</span>`;
+  const stage = document.getElementById("stage");
+  const inner = `<div class="layers">${layers(v.inside, v.edges).map(l => `<div class="layer">${l.map(e => card(e, v)).join("")}</div>`).join("")}</div>`;
+  stage.insertAdjacentHTML("beforeend",
+    `<div class="row people">${v.people.map(e => card(e, v)).join("")}</div>
+     <div class="mid${v.side.length ? "" : " no-side"}">
+       ${v.boundary ? `<div class="boundary"><span class="blabel"><b>${esc(v.boundary.label)}</b> [${esc(v.boundary.type)}]</span>${inner}</div>` : `<div class="boundary" style="border:0;background:none;padding:0">${inner}</div>`}
+       ${v.side.length ? `<aside class="side"><div class="slabel">[${v.level === "component" ? "Related" : "External systems"}]</div>${v.side.map(e => card(e, v)).join("")}</aside>` : ""}
+     </div>`);
+  stage.querySelectorAll(".people .card").forEach(c => { c.dataset.zone = "p"; c.dataset.rank = -1; });
+  stage.querySelectorAll(".layer").forEach((l, i) => l.querySelectorAll(".card").forEach(c => { c.dataset.zone = "in"; c.dataset.rank = i; }));
+  stage.querySelectorAll(".side .card").forEach((c, i) => { c.dataset.zone = "s"; c.dataset.rank = i; });
+  renderLegend(v);
+  document.getElementById("footer").textContent = `Generated ${MODEL.generated || new Date().toISOString().slice(0, 10)} · C4 model · ${v.edges.length} relationships`;
+  const draw = () => wires(v.edges);
+  draw(); new ResizeObserver(draw).observe(stage); window.addEventListener("load", draw);
+}
+
+function renderLegend(v) {
+  const shown = [...v.people, ...v.inside, ...v.side];
+  const kinds = [...new Set(shown.map(kindOf))];
+  const cats = [...new Set(shown.flatMap(e => (e.tags || []).map(t => String(t).includes(":") ? t.split(":")[0] : "other")))];
+  document.getElementById("legend").innerHTML = `<h2>Key</h2><div class="items">
+    ${kinds.map(k => `<span><span class="tile k-${k}">${ICON[k]}</span>${esc(KIND_LABEL[k])}</span>`).join("")}
+    ${v.boundary ? `<span><span style="display:inline-block;width:22px;height:14px;border:1.5px dashed var(--boundary-line);background:var(--boundary);border-radius:3px;vertical-align:middle;margin-right:5px"></span>${esc(v.boundary.type.split(":")[0])} boundary</span>` : ""}
+    <span><span class="arrow"></span>Relationship: intent [technology]</span>
+    <span>${ICON.lock.replace("<svg", '<svg style="width:13px;height:13px;vertical-align:middle;color:#9aa5b4;margin-right:4px"')}Inside the boundary</span>
+    ${cats.map(c => `<span class="chip ${ICON[c] ? c : "other"}">${ICON[ICON[c] ? c : "other"]}${esc(c)} tag</span>`).join("")}
+  </div>`;
+}
+
+// Draw orthogonal arrows that stay out of the cards. Wires may only travel:
+//   - along a lane inside a gap between rows (each wire gets its own lane, so labels never collide),
+//   - down a column that was checked to be free of cards,
+//   - or in the corridor between the boundary and the side column.
+// Rows come from where cards actually landed, so wrapped layers and phone widths still work.
+function wires(edges) {
+  const svg = document.getElementById("wires"), stage = document.getElementById("stage");
+  const s = stage.getBoundingClientRect();
+  const rel = el => { const r = el.getBoundingClientRect(); return { l: r.left - s.left, t: r.top - s.top, r: r.right - s.left, b: r.bottom - s.top, cx: (r.left + r.right) / 2 - s.left, cy: (r.top + r.bottom) / 2 - s.top }; };
+  const cards = [...stage.querySelectorAll(".card")].map(el => ({ id: el.dataset.id, zone: el.dataset.zone, el, ...rel(el) }));
+  const byId = Object.fromEntries(cards.map(c => [c.id, c]));
+  const side = cards.filter(c => c.zone === "s"), bound = rel(stage.querySelector(".boundary"));
+  const sideLeft = side.length ? Math.min(...side.map(c => c.l)) : 0;
+  const corridor = side.length > 0 && sideLeft > bound.r;   // the side column really is at the side
+  // Cluster everything except a true side column into rows by top edge.
+  const rows = []; cards.filter(c => !(corridor && c.zone === "s")).sort((p, q) => p.t - q.t)
+    .forEach(c => { const r = rows[rows.length - 1]; if (r && c.t < r.t + 20) { r.cards.push(c); c.row = rows.length - 1; } else { rows.push({ t: c.t, cards: [c] }); c.row = rows.length - 1; } });
+  side.forEach(c => { if (corridor) c.row = -1; });
+  const gapOf = g => ({ top: g ? Math.max(...rows[g - 1].cards.map(c => c.b)) : 0, bottom: g < rows.length ? Math.min(...rows[g].cards.map(c => c.t)) : Math.max(...rows[g - 1].cards.map(c => c.b)) + 80 });
+  const lanes = {}, need = {};
+  const laneY = g => { const gap = gapOf(g), i = (lanes[g] = (lanes[g] ?? -1) + 1); need[g] = 30 + (i + 1) * 30; return Math.min(gap.top + 20 + i * 30, gap.bottom - 12); };
+  let corr = 0; const corrX = () => sideLeft - 120 + (corr++ % 8) * 14;
+  const usedX = [];
+  const freeX = (x, y1, y2) => {   // nearest column to x that crosses no card between y1 and y2
+    const lo = Math.min(y1, y2), hi = Math.max(y1, y2);
+    const ok = v => v > 2 && v < s.width - 2 && !cards.some(c => v > c.l - 4 && v < c.r + 4 && c.b > lo && c.t < hi);
+    const fresh = v => ok(v) && !usedX.some(u => Math.abs(u - v) < 8);
+    const v = [x, ...cards.flatMap(c => [14, 26, 38].flatMap(d => [c.l - d, c.r + d]))].filter(fresh).sort((p, q) => Math.abs(p - x) - Math.abs(q - x))[0] ?? x;
+    usedX.push(v); return v;
+  };
+  const rightMost = a => a.row >= 0 && !rows[a.row].cards.some(c => c !== a && c.l > a.r);
+  const groups = {}; edges.forEach(e => { const k = [e.from, e.to].sort().join("|"); (groups[k] ||= []).push(e); });
+  let out = `<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7a8798"/></marker></defs>`;
+  const labels = [];
+  for (const e of edges) {
+    const a = byId[e.from], b = byId[e.to]; if (!a || !b) continue;
+    const g = groups[[e.from, e.to].sort().join("|")], off = (g.indexOf(e) - (g.length - 1) / 2) * 18;
+    let pts, lx, ly;
+    if (corridor && (a.row < 0 || b.row < 0)) {
+      const cx = corrX();
+      const direct = (p, q, edgeX) => { pts = [[edgeX(p), p.cy + off], [cx, p.cy + off], [cx, q.cy + off], [edgeX(q), q.cy + off]];
+        if (Math.abs(p.cy - q.cy) > 70) { lx = cx; ly = (p.cy + q.cy) / 2; } else { lx = (edgeX(p) + cx) / 2; ly = p.cy + off - 16; } };
+      if (a.row < 0 && b.row < 0) direct(a, b, c => c.l);
+      else if (b.row < 0) {
+        if (rightMost(a)) direct(a, b, c => c === a ? c.r : c.l);
+        else { const y = laneY(a.row + 1); pts = [[a.cx + off, a.b], [a.cx + off, y], [cx, y], [cx, b.cy + off], [b.l, b.cy + off]]; lx = (a.cx + cx) / 2; ly = y; }
+      } else {
+        if (rightMost(b)) direct(a, b, c => c === b ? c.r : c.l);
+        else { const y = laneY(b.row); pts = [[a.l, a.cy + off], [cx, a.cy + off], [cx, y], [b.cx + off, y], [b.cx + off, b.t]]; lx = (b.cx + cx) / 2; ly = y; }
+      }
+    } else if (b.row > a.row) {   // downwards: lane below a, then (if far) a free column and a lane above b
+      const y = laneY(a.row + 1);
+      if (b.row === a.row + 1) { pts = [[a.cx + off, a.b], [a.cx + off, y], [b.cx + off, y], [b.cx + off, b.t]]; lx = (a.cx + b.cx) / 2; }
+      else { const y2 = laneY(b.row), fx = freeX(b.cx, y, y2); pts = [[a.cx + off, a.b], [a.cx + off, y], [fx, y], [fx, y2], [b.cx + off, y2], [b.cx + off, b.t]]; lx = (a.cx + fx) / 2; }
+      ly = y;
+    } else if (b.row < a.row) {   // upwards: mirror image
+      const y = laneY(a.row);
+      if (b.row === a.row - 1) { pts = [[a.cx + off, a.t], [a.cx + off, y], [b.cx + off, y], [b.cx + off, b.b]]; lx = (a.cx + b.cx) / 2; }
+      else { const y2 = laneY(b.row + 1), fx = freeX(b.cx, y2, y); pts = [[a.cx + off, a.t], [a.cx + off, y], [fx, y], [fx, y2], [b.cx + off, y2], [b.cx + off, b.b]]; lx = (a.cx + fx) / 2; }
+      ly = y;
+    } else {                      // same row: hop over the top
+      const y = laneY(a.row); pts = [[a.cx + off, a.t], [a.cx + off, y], [b.cx + off, y], [b.cx + off, b.t]]; lx = (a.cx + b.cx) / 2; ly = y;
+    }
+    out += `<path class="wire" d="M${pts.map(p => p.join(",")).join("L")}" marker-end="url(#arr)"/>`;
+    // Two labels that would sit on top of each other get pushed apart.
+    while (labels.some(l => Math.abs(l.x - lx) < 120 && Math.abs(l.y - ly) < 30)) ly += 32;
+    labels.push({ x: lx, y: ly, text: e.labels.join(" / ") || "Uses", tech: e.techs.join(", ") });
+  }
+  // A gap that ran out of lanes grows by exactly what it is short; the ResizeObserver then redraws.
+  for (const g in need) {
+    const gap = gapOf(+g), delta = need[g] - (gap.bottom - gap.top); if (delta <= 1 || +g === 0) continue;
+    const cur = rows[+g].cards[0].el, prev = rows[g - 1].cards[0].el, grow = (el, prop) => el.style[prop] = (parseFloat(getComputedStyle(el)[prop]) || 0) + delta + "px";
+    const pc = cur.closest(".layer, .people, .side"), pp = prev.closest(".layer, .people, .side");
+    if (pc === pp) grow(pc, "rowGap"); else if (pp.classList.contains("people")) grow(pp, "marginBottom"); else if (pc.classList.contains("layer")) grow(pc, "marginTop"); else grow(cur, "marginTop");
+    return;
+  }
+  svg.innerHTML = out;
+  for (const l of labels) {
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.innerHTML = `<rect class="wlabel-bg"/><text class="wlabel" text-anchor="middle"><tspan x="${l.x}" y="${l.y}">${esc(l.text)}</tspan>${l.tech ? `<tspan class="tech" x="${l.x}" dy="12">[${esc(l.tech)}]</tspan>` : ""}</text>`;
+    svg.appendChild(g);
+    const t = g.querySelector("text").getBBox(), r = g.querySelector("rect");
+    r.setAttribute("x", t.x - 6); r.setAttribute("y", t.y - 3); r.setAttribute("width", t.width + 12); r.setAttribute("height", t.height + 6);
+    g.querySelector("text").setAttribute("transform", `translate(0,${-(t.height / 2) + 8})`); r.setAttribute("transform", `translate(0,${-(t.height / 2) + 8})`);
+  }
+}
+render();
+</script>
+</body>
+</html>

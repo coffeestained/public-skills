@@ -1,0 +1,245 @@
+{
+  "project": "Pulse",
+  "description": "A small team chat product: web client, API, real-time fan-out and a store.",
+  "generated": "2026-10-09",
+  "elements": [
+    {
+      "id": "user",
+      "type": "person",
+      "name": "User",
+      "description": "A member of a workspace who reads and posts messages.",
+      "external": true
+    },
+    {
+      "id": "pulse",
+      "type": "system",
+      "name": "Pulse",
+      "description": "Lets teams chat in channels with live updates."
+    },
+    {
+      "id": "ses",
+      "type": "system",
+      "name": "Amazon SES",
+      "external": true,
+      "technology": "SaaS",
+      "description": "Sends invite and digest emails.",
+      "tags": [
+        "region:us-east-1"
+      ]
+    },
+    {
+      "id": "auth0",
+      "type": "system",
+      "name": "Auth0",
+      "external": true,
+      "technology": "SaaS",
+      "description": "Identity provider. Issues the JWTs the API trusts.",
+      "tags": [
+        "env:Production"
+      ]
+    },
+    {
+      "id": "web",
+      "type": "container",
+      "parent": "pulse",
+      "kind": "web",
+      "name": "Web App",
+      "technology": "React, TypeScript",
+      "description": "Single-page app. Renders channels and talks to the API and real-time service.",
+      "tags": [
+        "tech:React",
+        "tech:TypeScript",
+        "tech:CloudFront",
+        "region:us-west-1",
+        "team:The A Team"
+      ]
+    },
+    {
+      "id": "api",
+      "type": "container",
+      "parent": "pulse",
+      "kind": "app",
+      "name": "API Service",
+      "technology": "EC2, Node, TypeScript",
+      "description": "REST API for workspaces, channels and messages. Owns all writes.",
+      "tags": [
+        "tech:EC2",
+        "tech:TypeScript",
+        "tech:Node",
+        "region:us-west-1",
+        "env:Internal",
+        "risk:Medium",
+        "team:The A Team"
+      ]
+    },
+    {
+      "id": "rt",
+      "type": "container",
+      "parent": "pulse",
+      "kind": "app",
+      "name": "Real-time Service",
+      "technology": "EC2, Node, TypeScript",
+      "description": "Holds WebSocket connections and fans out new messages to clients.",
+      "tags": [
+        "tech:EC2",
+        "tech:Node",
+        "region:us-west-1",
+        "env:Internal",
+        "risk:High"
+      ]
+    },
+    {
+      "id": "events",
+      "type": "container",
+      "parent": "pulse",
+      "kind": "queue",
+      "name": "Message Events",
+      "technology": "SQS",
+      "description": "Queue of new-message events the real-time service consumes.",
+      "tags": [
+        "tech:SQS",
+        "region:us-west-1"
+      ]
+    },
+    {
+      "id": "db",
+      "type": "container",
+      "parent": "pulse",
+      "kind": "store",
+      "name": "API Database",
+      "technology": "DynamoDB",
+      "description": "Workspaces, channels, messages and memberships.",
+      "tags": [
+        "tech:DynamoDB",
+        "tech:NoSQL",
+        "region:us-west-1",
+        "region:us-east-1",
+        "risk:High"
+      ]
+    },
+    {
+      "id": "api.auth",
+      "type": "component",
+      "parent": "api",
+      "name": "Auth Middleware",
+      "technology": "Express middleware",
+      "description": "Verifies JWTs and loads the caller's memberships.",
+      "tags": [
+        "tech:JWT"
+      ]
+    },
+    {
+      "id": "api.channels",
+      "type": "component",
+      "parent": "api",
+      "name": "Channels Controller",
+      "technology": "Express router",
+      "description": "Create, list and archive channels."
+    },
+    {
+      "id": "api.messages",
+      "type": "component",
+      "parent": "api",
+      "name": "Messages Controller",
+      "technology": "Express router",
+      "description": "Post and page through messages. Publishes events."
+    },
+    {
+      "id": "api.repo",
+      "type": "component",
+      "parent": "api",
+      "name": "Repository",
+      "technology": "AWS SDK v3",
+      "description": "All DynamoDB reads and writes behind one interface.",
+      "tags": [
+        "tech:DynamoDB"
+      ]
+    },
+    {
+      "id": "api.mail",
+      "type": "component",
+      "parent": "api",
+      "name": "Mailer",
+      "technology": "AWS SDK v3",
+      "description": "Builds and sends invite emails."
+    }
+  ],
+  "relationships": [
+    {
+      "from": "user",
+      "to": "web",
+      "label": "Reads and posts messages",
+      "technology": "HTTPS"
+    },
+    {
+      "from": "web",
+      "to": "auth0",
+      "label": "Signs in with",
+      "technology": "OIDC / HTTPS"
+    },
+    {
+      "from": "web",
+      "to": "api.channels",
+      "label": "Manages channels",
+      "technology": "JSON / HTTPS"
+    },
+    {
+      "from": "web",
+      "to": "api.messages",
+      "label": "Posts and loads messages",
+      "technology": "JSON / HTTPS"
+    },
+    {
+      "from": "web",
+      "to": "rt",
+      "label": "Subscribes to channel updates",
+      "technology": "WebSocket"
+    },
+    {
+      "from": "api.auth",
+      "to": "auth0",
+      "label": "Fetches signing keys",
+      "technology": "JWKS / HTTPS"
+    },
+    {
+      "from": "api.channels",
+      "to": "api.repo",
+      "label": "Reads and writes channels"
+    },
+    {
+      "from": "api.messages",
+      "to": "api.repo",
+      "label": "Reads and writes messages"
+    },
+    {
+      "from": "api.messages",
+      "to": "events",
+      "label": "Publishes new-message events",
+      "technology": "SQS"
+    },
+    {
+      "from": "api.repo",
+      "to": "db",
+      "label": "Reads from and writes to",
+      "technology": "DynamoDB API"
+    },
+    {
+      "from": "api.mail",
+      "to": "ses",
+      "label": "Sends invite emails",
+      "technology": "SES API"
+    },
+    {
+      "from": "events",
+      "to": "rt",
+      "label": "Delivers events",
+      "technology": "SQS long poll"
+    },
+    {
+      "from": "rt",
+      "to": "db",
+      "label": "Reads channel membership",
+      "technology": "DynamoDB API"
+    }
+  ]
+}

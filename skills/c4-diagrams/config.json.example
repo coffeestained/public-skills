@@ -1,0 +1,7 @@
+{
+  "project_name": "My System",
+  "output_dir": "outputs",
+  "levels": ["context", "container"],
+  "include": ["src/**", "services/**"],
+  "exclude": ["**/node_modules/**", "**/*.test.*"]
+}
