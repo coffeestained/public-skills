@@ -4,7 +4,7 @@ description: Build a STRIDE threat model from a project's C4 architecture model 
 license: MIT
 metadata:
   author: coffeestained
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Threat model

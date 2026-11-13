@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>C4 diagrams</title>
+<style>
+/* @shared:begin tokens.css (edit shared/tokens.css, then run tools/stamp.py) */
+/* Light mode only. These are documents: they get printed and pasted into wikis. */
+:root {
+  --bg: #f5f6f8; --card: #ffffff; --ink: #1b2330; --muted: #5f6b7a; --line: #d9dee6;
+  --wire: #7a8798; --boundary: #eef2f8; --boundary-line: #b9c4d4;
+  --shadow: 0 1px 2px rgba(16,24,40,.05), 0 6px 16px rgba(16,24,40,.07);
+}
+/* @shared:end tokens.css */
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); padding: 24px;
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+h1 { margin: 0 0 4px; font-size: 20px; }
+.sub { color: var(--muted); margin-bottom: 20px; }
+.pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; max-width: 1100px; }
+a.page { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+  box-shadow: var(--shadow); text-decoration: none; color: inherit; }
+a.page:hover { border-color: #2f6fed; }
+a.page b { display: block; font-size: 15px; }
+a.page .lvl { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+a.page p { margin: 8px 0 0; color: var(--muted); font-size: 12.5px; }
+footer { margin-top: 24px; color: var(--muted); font-size: 11px; }
+</style>
+</head>
+<body>
+<h1 id="title"></h1>
+<div class="sub" id="sub"></div>
+<div class="pages" id="pages"></div>
+<footer>C4 model · <a href="model.json">model.json</a></footer>
+<script>
+// PAGES lists the rendered files in reading order: context, container, then component pages.
+const MODEL = /*__MODEL__*/{"project": "Atlas", "description": "A fictional example: live radar and wind on a map, built AWS-native.", "generated": "2026-11-12", "elements": [{"id": "viewer", "type": "person", "name": "Viewer", "external": true, "description": "Anyone checking radar and wind on a map. Nobody signs in."}, {"id": "atlas", "type": "system", "name": "Atlas", "description": "Live radar and wind on a map, for web and mobile."}, {"id": "noaa", "type": "system", "name": "NOAA Open Data", "external": true, "technology": "Public S3", "description": "Public forecast model output and radar mosaics."}, {"id": "location", "type": "system", "name": "Amazon Location Service", "external": true, "technology": "SaaS", "description": "Base-map tiles under the weather layers."}, {"id": "nws", "type": "system", "name": "NWS API", "external": true, "technology": "Public HTTPS", "description": "Active weather alerts by area."}, {"id": "web", "type": "container", "name": "Web App", "parent": "atlas", "kind": "web", "technology": "TypeScript, React, MapLibre", "description": "Draws the map and plays frames over it in order."}, {"id": "mobile", "type": "container", "name": "Mobile App", "parent": "atlas", "kind": "mobile", "technology": "React Native", "description": "The same map on iOS and Android."}, {"id": "cdn", "type": "container", "name": "Edge CDN", "parent": "atlas", "kind": "app", "technology": "CloudFront", "tags": ["region:Edge"], "description": "Serves frames from cache and forwards /api to the API."}, {"id": "api", "type": "container", "name": "API", "parent": "atlas", "kind": "function", "technology": "API Gateway, Lambda, TypeScript", "tags": ["region:us-east-1"], "description": "Read-only. Lists current frames, answers a point forecast, lists alerts."}, {"id": "ingest", "type": "container", "name": "Ingest Worker", "parent": "atlas", "kind": "app", "technology": "ECS Fargate on a schedule, Python", "tags": ["region:us-east-1", "risk:High"], "description": "Each hour, pulls new NOAA files and renders them into frames. The only writer."}, {"id": "frames", "type": "container", "name": "Frame Store", "parent": "atlas", "kind": "store", "technology": "S3", "tags": ["region:us-east-1"], "description": "Rendered frames, keyed by layer, run and time. Never overwritten."}, {"id": "catalog", "type": "container", "name": "Frame Catalog", "parent": "atlas", "kind": "store", "technology": "DynamoDB", "tags": ["region:us-east-1"], "description": "Which run is complete and current, and the forecast grid cells."}, {"id": "api.router", "type": "component", "name": "Router", "parent": "api", "technology": "Lambda handler", "description": "Validates each request and picks its handler."}, {"id": "api.frames", "type": "component", "name": "Frame Manifest", "parent": "api", "technology": "TypeScript", "description": "Builds the list of frame URLs for the current run."}, {"id": "api.point", "type": "component", "name": "Point Forecast", "parent": "api", "technology": "TypeScript", "description": "Finds the grid cell for a coordinate and returns its hourly values."}, {"id": "api.alerts", "type": "component", "name": "Alerts", "parent": "api", "technology": "TypeScript", "description": "Returns the active alerts that cover a coordinate."}, {"id": "api.catalog", "type": "component", "name": "Catalog Repository", "parent": "api", "technology": "AWS SDK v3", "description": "Every catalog read behind one interface."}, {"id": "api.nws", "type": "component", "name": "NWS Client", "parent": "api", "technology": "fetch", "description": "Calls the NWS API with a timeout and a short cache."}], "relationships": [{"from": "viewer", "to": "web", "label": "Watches radar and wind", "technology": "HTTPS"}, {"from": "viewer", "to": "mobile", "label": "Watches radar and wind", "technology": "iOS, Android"}, {"from": "web", "to": "cdn", "label": "Loads frames, calls the API", "technology": "HTTPS"}, {"from": "mobile", "to": "cdn", "label": "Loads frames, calls the API", "technology": "HTTPS"}, {"from": "web", "to": "location", "label": "Loads base-map tiles", "technology": "HTTPS"}, {"from": "mobile", "to": "location", "label": "Loads base-map tiles", "technology": "HTTPS"}, {"from": "cdn", "to": "frames", "label": "Fetches a frame on a cache miss", "technology": "S3 origin"}, {"from": "cdn", "to": "api.router", "label": "Forwards /api requests", "technology": "HTTPS"}, {"from": "api.router", "to": "api.frames", "label": "Lists current frames"}, {"from": "api.router", "to": "api.point", "label": "Answers a point forecast"}, {"from": "api.router", "to": "api.alerts", "label": "Lists active alerts"}, {"from": "api.frames", "to": "api.catalog", "label": "Reads the current run"}, {"from": "api.point", "to": "api.catalog", "label": "Reads a grid cell"}, {"from": "api.alerts", "to": "api.nws", "label": "Asks for alerts in an area"}, {"from": "api.catalog", "to": "catalog", "label": "Reads runs and grid cells", "technology": "DynamoDB API"}, {"from": "api.nws", "to": "nws", "label": "Fetches active alerts", "technology": "HTTPS"}, {"from": "ingest", "to": "noaa", "label": "Pulls new model files", "technology": "S3 GET"}, {"from": "ingest", "to": "frames", "label": "Writes rendered frames", "technology": "S3 PUT"}, {"from": "ingest", "to": "catalog", "label": "Marks a run current", "technology": "DynamoDB API"}]};
+const PAGES = /*__PAGES__*/[{"file": "context.html", "title": "System Context", "level": "Level: context", "summary": "The system, its users and the external systems around it."}, {"file": "container.html", "title": "Containers", "level": "Level: container", "summary": "The apps and data stores inside the system and how they talk."}, {"file": "component-api.html", "title": "Components: API", "level": "Level: component", "summary": "Inside the API container."}];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+document.title = `C4 diagrams: ${MODEL.project || ""}`;
+document.getElementById("title").textContent = `C4 diagrams: ${MODEL.project || ""}`;
+document.getElementById("sub").textContent = MODEL.description || "";
+document.getElementById("pages").innerHTML = PAGES.map(p =>
+  `<a class="page" href="${esc(p.file)}"><b>${esc(p.title)}</b><div class="lvl">${esc(p.level)}</div><p>${esc(p.summary)}</p></a>`).join("");
+</script>
+</body>
+</html>

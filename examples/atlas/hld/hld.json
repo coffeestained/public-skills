@@ -1,0 +1,159 @@
+{
+  "type": "hld",
+  "subject": "atlas",
+  "status": "draft",
+  "version": "0.1",
+  "generated": "2026-11-12",
+  "owner": "Atlas platform team",
+  "summary": "Atlas shows live radar and wind on a map, on the web and on phones. It turns public NOAA model data into picture frames every hour and serves them from a cache. Nobody signs in and nothing personal is kept.",
+  "sections": [
+    {
+      "id": "purpose",
+      "blocks": [
+        {
+          "kind": "text",
+          "text": "Atlas gives anyone a current picture of the weather over a map: where it is raining, how the wind moves, what is forecast for a point, and which alerts are active. It exists so that public forecast data is usable at a glance, without an account."
+        }
+      ]
+    },
+    {
+      "id": "scope",
+      "blocks": [
+        {
+          "kind": "list",
+          "title": "In scope",
+          "items": [
+            "Radar and wind frames for the continental United States",
+            "A forecast for any tapped point",
+            "Active weather alerts",
+            "Web, iOS and Android from one API"
+          ]
+        },
+        {
+          "kind": "list",
+          "title": "Out of scope",
+          "items": [
+            "Accounts, saved places and notifications",
+            "Forecasting of our own: Atlas draws what NOAA publishes",
+            "Coverage outside NOAA's models"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "context",
+      "blocks": [
+        {
+          "kind": "diagram",
+          "level": "context"
+        },
+        {
+          "kind": "text",
+          "text": "One kind of user and three public data sources. Atlas holds no credentials for people."
+        }
+      ]
+    },
+    {
+      "id": "architecture",
+      "blocks": [
+        {
+          "kind": "diagram",
+          "level": "container"
+        },
+        {
+          "kind": "text",
+          "text": "Two clients read through one CDN. A scheduled worker is the only writer."
+        }
+      ]
+    },
+    {
+      "id": "key-flows",
+      "blocks": [
+        {
+          "kind": "list",
+          "title": "Open the map",
+          "ordered": true,
+          "items": [
+            "The app loads base-map tiles from Amazon Location Service.",
+            "It asks the API for the current frame list.",
+            "The API reads the newest complete run from the Frame Catalog.",
+            "The app loads each frame through the CDN and plays them in order."
+          ]
+        },
+        {
+          "kind": "list",
+          "title": "Publish a new run",
+          "ordered": true,
+          "items": [
+            "Every hour the Ingest Worker checks NOAA for a new model run.",
+            "It downloads the files and renders one frame per layer and time step.",
+            "It writes the frames to the Frame Store under the run's own prefix.",
+            "Last, it marks the run current in the Frame Catalog."
+          ]
+        },
+        {
+          "kind": "list",
+          "title": "Tap a point",
+          "ordered": true,
+          "items": [
+            "The app sends the coordinates to the API.",
+            "The API reads the matching grid cell from the Frame Catalog.",
+            "It asks the NWS API for alerts covering the point and returns both."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "risks",
+      "blocks": [
+        {
+          "kind": "risks",
+          "items": [
+            {
+              "id": "R1",
+              "title": "NOAA publishes late or not at all",
+              "impact": "high",
+              "mitigation": "Keep serving the last complete run and show its age on the map.",
+              "elements": [
+                "noaa",
+                "ingest"
+              ]
+            },
+            {
+              "id": "R2",
+              "title": "A half-published run reaches viewers",
+              "impact": "high",
+              "mitigation": "Write every frame first and mark the run current last, so clients only ever see complete runs.",
+              "elements": [
+                "ingest",
+                "catalog"
+              ]
+            },
+            {
+              "id": "R3",
+              "title": "Storm-day traffic on a public API",
+              "impact": "medium",
+              "mitigation": "Cache every API response at the CDN for a short time and throttle per address.",
+              "elements": [
+                "cdn",
+                "api"
+              ]
+            },
+            {
+              "id": "R4",
+              "title": "Everything runs in one region",
+              "impact": "medium",
+              "mitigation": "Cached frames stay available; the API and ingest stop until the region returns. Accepted for now.",
+              "elements": [
+                "api",
+                "ingest",
+                "frames",
+                "catalog"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

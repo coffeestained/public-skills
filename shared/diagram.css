@@ -1,0 +1,67 @@
+/* Diagram: a positioned stage so SVG wires can sit over the cards. It is its own size container,
+   so a diagram lays out for the column it is in, not for the window. */
+.stage { position: relative; padding: 18px 24px 24px; --gap: 90px; container-type: inline-size; }
+/* Wires sit above the cards; label pills are opaque so they still read where they cross. */
+.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 3; }
+.row { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px 40px; }
+.row.people { margin-bottom: calc(var(--gap) - 16px); }
+.row.people:empty { margin: 0; }   /* a view with no people leaves no gap for them */
+.mid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 150px; align-items: start; }
+.mid.no-side { grid-template-columns: minmax(0, 1fr); }
+.boundary { position: relative; border: 1.5px dashed var(--boundary-line); border-radius: 12px;
+  background: var(--boundary); padding: 40px 28px 28px; }
+.boundary .blabel { position: absolute; top: 10px; left: 14px; font-size: 12px; color: var(--muted); }
+.boundary .blabel b { color: var(--ink); font-weight: 600; }
+.layers { display: flex; flex-direction: column; gap: var(--gap); }
+.layer { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px 44px; }
+.side { display: flex; flex-direction: column; gap: var(--gap); padding-top: 8px; }
+.side .slabel { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: -22px; }
+@container (max-width: 812px) {
+  .mid { grid-template-columns: minmax(0, 1fr); gap: var(--gap); }
+  .row, .layer { gap: 28px; }
+  .boundary { padding: 40px 14px 20px; }
+}
+
+/* Element card: icon, name, [Type: Tech], description, chips. */
+.card { position: relative; width: 250px; max-width: 100%; background: var(--card); border: 1px solid var(--line);
+  border-radius: 10px; box-shadow: var(--shadow); padding: 26px 14px 12px; }
+.card.person { border-radius: 16px 16px 10px 10px; }
+.card.external { border-style: dashed; background: #fbfbfc; }
+.card .badge { position: absolute; top: 7px; font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; }
+.card .badge.tl { left: 10px; } .card .badge.tr { right: 10px; }
+.card .badge a { text-decoration: none; color: inherit; }
+.card .badge svg { width: 12px; height: 12px; }
+.card .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: #36b37e; display: inline-block; }
+.card .head { display: flex; align-items: center; gap: 10px; }
+.card .tile { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 8px; display: grid; place-items: center; color: #fff; }
+.card .tile svg { width: 20px; height: 20px; }
+.card .name { font-weight: 700; font-size: 15px; line-height: 1.2; }
+.card .type { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.card .desc { color: var(--ink); font-size: 12.5px; margin-top: 8px; }
+.card .foot { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.card .lock { color: #9aa5b4; width: 13px; height: 13px; margin-left: auto; }
+.card .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eef1f5; }
+
+/* Wires: orthogonal with rounded corners, one arrowhead, label in a white pill. */
+.wire { fill: none; stroke: var(--wire); stroke-width: 1.4; }
+.hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; }   /* a wide, unseen line to point at */
+.wl { pointer-events: all; }
+.wlabel-bg { fill: #fff; stroke: var(--line); rx: 4; }
+.wlabel { font-size: 11px; fill: var(--ink); }
+.wlabel .tech { fill: var(--muted); font-size: 10px; }
+/* Pointing at a wire or a card lights what it connects and quiets the rest. */
+.w, .wl, .card { transition: opacity .12s; }
+.stage.focus .w:not(.on), .stage.focus .wl:not(.on) { opacity: .12; }
+.stage.focus .card:not(.on) { opacity: .5; }
+.w.on .wire { stroke: #2f6fed; stroke-width: 2; }
+.wl.on .wlabel-bg { stroke: #2f6fed; }
+.card.on { border-color: #2f6fed; box-shadow: 0 0 0 3px rgba(47,111,237,.16), var(--shadow); }
+
+/* Key entries only a diagram has. */
+.legend .tile { width: 18px; height: 18px; border-radius: 4px; display: inline-grid; place-items: center; color: #fff; vertical-align: middle; margin-right: 5px; }
+.legend .tile svg { width: 11px; height: 11px; }
+.legend .arrow { display: inline-block; width: 40px; height: 1.4px; background: var(--wire); position: relative; vertical-align: middle; margin-right: 6px; }
+.legend .arrow::after { content: ""; position: absolute; right: -1px; top: -4px; border: 5px solid transparent; border-left: 7px solid var(--wire); }
+.legend .hint { color: var(--muted); }
+/* On paper a diagram that fits a page stays on one, and nothing can be pointed at. */
+@media print { .stage { break-inside: avoid; } .legend .hint { display: none; } }
