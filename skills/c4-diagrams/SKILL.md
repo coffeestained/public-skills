@@ -4,7 +4,7 @@ description: Turn a codebase into C4 model architecture diagrams (system context
 license: MIT
 metadata:
   author: coffeestained
-  version: "1.0"
+  version: "1.1"
 ---
 
 # C4 diagrams
@@ -33,7 +33,7 @@ Read entry points, service definitions, Dockerfiles, compose files, infra, packa
 - **Containers**: things that run or store data. Apps, services, workers, databases, queues, buckets. Each queue or topic is its own container. Not Docker images, not libraries.
 - **External systems**: SaaS and other teams' systems the code calls. Treat hosted databases you own (RDS, DynamoDB) as containers, not externals.
 - **Components** (only if `component` is in `levels`): the major modules inside each container, grouped by responsibility. Five to nine per container is plenty.
-- **Relationships**: one per direction. Label with intent ("Publishes order events", not "Uses") and the protocol or technology.
+- **Relationships**: one per direction. Label with intent ("Publishes order events", not "Uses") and the protocol or technology. Keep a label to five words or so: a higher level shows every label between the same pair together.
 
 Give every element a one-sentence description and a technology. Add tags where the code tells you: `tech:`, `region:`, `env:`, `team:`, `risk:`. Skip tags you would have to guess.
 
@@ -73,7 +73,7 @@ A complete one: https://github.com/coffeestained/public-skills/blob/main/example
 python3 <skill>/scripts/render.py <output_dir>/c4/model.json <output_dir>/c4 context,container
 ```
 
-This writes `context.html`, `container.html`, `component-<id>.html` and `index.html` next to `model.json`. Each page is self-contained: open it in a browser, print it, or paste it into a wiki.
+This writes `context.html`, `container.html`, `component-<id>.html` and `index.html` next to `model.json`. Each page is self-contained: open it in a browser, print it, or paste it into a wiki. In a browser, pointing at a line or a card lights what it connects and says what passes between them.
 
 No Python? Copy `templates/diagram.html`, replace the value after `/*__MODEL__*/` with the model JSON and the value after `/*__VIEW__*/` with `{"level":"container"}` (or `{"level":"component","container":"api"}`), one file per page. Do the same for `templates/index.html` with `/*__PAGES__*/`.
 

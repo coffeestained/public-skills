@@ -5,12 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>C4 diagram</title>
 <style>
+/* @shared:begin tokens.css (edit shared/tokens.css, then run tools/stamp.py) */
 /* Light mode only. These are documents: they get printed and pasted into wikis. */
 :root {
   --bg: #f5f6f8; --card: #ffffff; --ink: #1b2330; --muted: #5f6b7a; --line: #d9dee6;
   --wire: #7a8798; --boundary: #eef2f8; --boundary-line: #b9c4d4;
   --shadow: 0 1px 2px rgba(16,24,40,.05), 0 6px 16px rgba(16,24,40,.07);
 }
+/* @shared:end tokens.css */
+/* @shared:begin page.css (edit shared/page.css, then run tools/stamp.py) */
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--ink);
   font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
@@ -18,17 +21,69 @@ a { color: inherit; }
 header { padding: 22px 24px 6px; }
 header h1 { margin: 0; font-size: 20px; }
 header .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
-/* Scope / primary / audience: C4 asks every diagram to say what it covers and for whom. */
+/* Scope / primary / audience: every page says what it covers and for whom. */
 .meta { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 10px 24px 0; font-size: 12px; color: var(--muted); }
 .meta b { color: var(--ink); font-weight: 600; margin-right: 4px; }
 nav.crumbs { padding: 6px 24px 0; font-size: 12px; color: var(--muted); }
+section { padding: 20px 24px 0; }
+section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 10px; }
 
-/* Diagram: a positioned stage so SVG wires can sit over the cards. */
-.stage { position: relative; padding: 18px 24px 24px; --gap: 90px; }
+table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; font-size: 12.5px; }
+th, td { text-align: left; padding: 8px 10px; border-top: 1px solid #eef1f5; vertical-align: top; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: #fafbfc; border-top: 0; }
+td .tech { color: var(--muted); font-size: 11px; }
+.wrap { border-radius: 10px; overflow: auto; }
+
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 7px;
+  border-radius: 5px; border: 1px solid; }
+.chip svg { width: 11px; height: 11px; }
+/* One colour per tag category, all readable on white. */
+.chip.tech   { color: #9a4a0b; background: #fff3e8; border-color: #f3c7a0; }
+.chip.region { color: #1d4ed8; background: #eaf0ff; border-color: #b7c7fb; }
+.chip.env    { color: #92400e; background: #fff8e1; border-color: #f2d58a; }
+.chip.team   { color: #166534; background: #ecfdf3; border-color: #a7e3bd; }
+.chip.risk   { color: #b42318; background: #fef3f2; border-color: #f4b6b0; }
+.chip.other  { color: #475467; background: #f2f4f7; border-color: #d0d5dd; }
+/* Severity of a threat, impact of a risk. */
+.chip.critical { color: #fff; background: #b42318; border-color: #b42318; }
+.chip.high { color: #b42318; background: #fef3f2; border-color: #f4b6b0; }
+.chip.medium { color: #92400e; background: #fff8e1; border-color: #f2d58a; }
+.chip.low { color: #166534; background: #ecfdf3; border-color: #a7e3bd; }
+
+/* Tile colours by element kind. Matches the key. */
+.k-person { background: #6c5ce7; } .k-system { background: #2f6fed; } .k-external { background: #6b7280; }
+.k-app { background: #e8822a; } .k-web { background: #1f9ad6; } .k-mobile { background: #1f9ad6; }
+.k-store { background: #3b9c5c; } .k-queue { background: #c99700; } .k-function { background: #d9532b; }
+.k-component { background: #4b7bec; }
+
+/* Key. */
+.legend { margin: 8px 24px 28px; display: inline-block; border: 1px solid var(--line); background: var(--card);
+  border-radius: 10px; padding: 10px 14px; box-shadow: var(--shadow); font-size: 12px; }
+.legend h2 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.legend .items { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+footer { padding: 0 24px 24px; color: var(--muted); font-size: 11px; }
+/* The page's one tooltip. Anything carrying data-tip shows it. */
+[data-tip] { cursor: help; }
+.tip { position: fixed; z-index: 20; max-width: 340px; padding: 8px 10px; border-radius: 8px; background: var(--ink); color: #fff;
+  font-size: 12px; line-height: 1.4; box-shadow: 0 6px 20px rgba(16,24,40,.25); pointer-events: none; }
+.tip b { display: block; margin-bottom: 2px; }
+.tip .t { color: #b8c2d0; font-size: 11px; margin-top: 2px; }
+@media print {
+  :root { --shadow: none; }
+  html, body { background: #fff; }
+  .tip { display: none; }
+  @page { margin: 12mm; }
+}
+/* @shared:end page.css */
+/* @shared:begin diagram.css (edit shared/diagram.css, then run tools/stamp.py) */
+/* Diagram: a positioned stage so SVG wires can sit over the cards. It is its own size container,
+   so a diagram lays out for the column it is in, not for the window. */
+.stage { position: relative; padding: 18px 24px 24px; --gap: 90px; container-type: inline-size; }
 /* Wires sit above the cards; label pills are opaque so they still read where they cross. */
 .wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 3; }
 .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px 40px; }
 .row.people { margin-bottom: calc(var(--gap) - 16px); }
+.row.people:empty { margin: 0; }   /* a view with no people leaves no gap for them */
 .mid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 150px; align-items: start; }
 .mid.no-side { grid-template-columns: minmax(0, 1fr); }
 .boundary { position: relative; border: 1.5px dashed var(--boundary-line); border-radius: 12px;
@@ -39,7 +94,7 @@ nav.crumbs { padding: 6px 24px 0; font-size: 12px; color: var(--muted); }
 .layer { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px 44px; }
 .side { display: flex; flex-direction: column; gap: var(--gap); padding-top: 8px; }
 .side .slabel { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: -22px; }
-@media (max-width: 860px) {
+@container (max-width: 812px) {
   .mid { grid-template-columns: minmax(0, 1fr); gap: var(--gap); }
   .row, .layer { gap: 28px; }
   .boundary { padding: 40px 14px 20px; }
@@ -63,53 +118,39 @@ nav.crumbs { padding: 6px 24px 0; font-size: 12px; color: var(--muted); }
 .card .desc { color: var(--ink); font-size: 12.5px; margin-top: 8px; }
 .card .foot { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
 .card .lock { color: #9aa5b4; width: 13px; height: 13px; margin-left: auto; }
-.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eef1f5; }
-.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 7px;
-  border-radius: 5px; border: 1px solid; }
-.chip svg { width: 11px; height: 11px; }
-/* One colour per chip category, all readable on white. */
-.chip.tech   { color: #9a4a0b; background: #fff3e8; border-color: #f3c7a0; }
-.chip.region { color: #1d4ed8; background: #eaf0ff; border-color: #b7c7fb; }
-.chip.env    { color: #92400e; background: #fff8e1; border-color: #f2d58a; }
-.chip.team   { color: #166534; background: #ecfdf3; border-color: #a7e3bd; }
-.chip.risk   { color: #b42318; background: #fef3f2; border-color: #f4b6b0; }
-.chip.other  { color: #475467; background: #f2f4f7; border-color: #d0d5dd; }
+.card .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eef1f5; }
 
-/* Tile colours by element kind. Matches the legend. */
-.k-person { background: #6c5ce7; } .k-system { background: #2f6fed; } .k-external { background: #6b7280; }
-.k-app { background: #e8822a; } .k-web { background: #1f9ad6; } .k-mobile { background: #1f9ad6; }
-.k-store { background: #3b9c5c; } .k-queue { background: #c99700; } .k-function { background: #d9532b; }
-.k-component { background: #4b7bec; }
-
-/* Wires: orthogonal, one arrowhead, label in a white pill. */
+/* Wires: orthogonal with rounded corners, one arrowhead, label in a white pill. */
 .wire { fill: none; stroke: var(--wire); stroke-width: 1.4; }
+.hit { fill: none; stroke: transparent; stroke-width: 14; pointer-events: stroke; }   /* a wide, unseen line to point at */
+.wl { pointer-events: all; }
 .wlabel-bg { fill: #fff; stroke: var(--line); rx: 4; }
 .wlabel { font-size: 11px; fill: var(--ink); }
-.wlabel.tech { fill: var(--muted); font-size: 10px; }
+.wlabel .tech { fill: var(--muted); font-size: 10px; }
+/* Pointing at a wire or a card lights what it connects and quiets the rest. */
+.w, .wl, .card { transition: opacity .12s; }
+.stage.focus .w:not(.on), .stage.focus .wl:not(.on) { opacity: .12; }
+.stage.focus .card:not(.on) { opacity: .5; }
+.w.on .wire { stroke: #2f6fed; stroke-width: 2; }
+.wl.on .wlabel-bg { stroke: #2f6fed; }
+.card.on { border-color: #2f6fed; box-shadow: 0 0 0 3px rgba(47,111,237,.16), var(--shadow); }
 
-/* Key. */
-.legend { margin: 8px 24px 28px; display: inline-block; border: 1px solid var(--line); background: var(--card);
-  border-radius: 10px; padding: 10px 14px; box-shadow: var(--shadow); font-size: 12px; }
-.legend h2 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-.legend .items { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+/* Key entries only a diagram has. */
 .legend .tile { width: 18px; height: 18px; border-radius: 4px; display: inline-grid; place-items: center; color: #fff; vertical-align: middle; margin-right: 5px; }
 .legend .tile svg { width: 11px; height: 11px; }
 .legend .arrow { display: inline-block; width: 40px; height: 1.4px; background: var(--wire); position: relative; vertical-align: middle; margin-right: 6px; }
 .legend .arrow::after { content: ""; position: absolute; right: -1px; top: -4px; border: 5px solid transparent; border-left: 7px solid var(--wire); }
-footer { padding: 0 24px 24px; color: var(--muted); font-size: 11px; }
-@media print {
-  body { background: #fff; }
-  .card, .legend { box-shadow: none; }
-  @page { margin: 12mm; }
-}
+.legend .hint { color: var(--muted); }
+/* On paper a diagram that fits a page stays on one, and nothing can be pointed at. */
+@media print { .stage { break-inside: avoid; } .legend .hint { display: none; } }
+/* @shared:end diagram.css */
 </style>
 </head>
 <body>
 <header><h1 id="title"></h1><div class="sub" id="subtitle"></div></header>
 <nav class="crumbs" id="crumbs"></nav>
 <div class="meta" id="meta"></div>
-<main class="stage" id="stage"><svg class="wires" id="wires"></svg></main>
-<section class="legend" id="legend"></section>
+<main id="diagram"></main>
 <footer id="footer"></footer>
 <script>
 // The agent replaces the two placeholders. MODEL is the whole model.json;
@@ -117,6 +158,8 @@ footer { padding: 0 24px 24px; color: var(--muted); font-size: 11px; }
 const MODEL = /*__MODEL__*/{"project": "Pulse", "description": "A small team chat product: web client, API, real-time fan-out and a store.", "generated": "2026-10-09", "elements": [{"id": "user", "type": "person", "name": "User", "description": "A member of a workspace who reads and posts messages.", "external": true}, {"id": "pulse", "type": "system", "name": "Pulse", "description": "Lets teams chat in channels with live updates."}, {"id": "ses", "type": "system", "name": "Amazon SES", "external": true, "technology": "SaaS", "description": "Sends invite and digest emails.", "tags": ["region:us-east-1"]}, {"id": "auth0", "type": "system", "name": "Auth0", "external": true, "technology": "SaaS", "description": "Identity provider. Issues the JWTs the API trusts.", "tags": ["env:Production"]}, {"id": "web", "type": "container", "parent": "pulse", "kind": "web", "name": "Web App", "technology": "React, TypeScript", "description": "Single-page app. Renders channels and talks to the API and real-time service.", "tags": ["tech:React", "tech:TypeScript", "tech:CloudFront", "region:us-west-1", "team:The A Team"]}, {"id": "api", "type": "container", "parent": "pulse", "kind": "app", "name": "API Service", "technology": "EC2, Node, TypeScript", "description": "REST API for workspaces, channels and messages. Owns all writes.", "tags": ["tech:EC2", "tech:TypeScript", "tech:Node", "region:us-west-1", "env:Internal", "risk:Medium", "team:The A Team"]}, {"id": "rt", "type": "container", "parent": "pulse", "kind": "app", "name": "Real-time Service", "technology": "EC2, Node, TypeScript", "description": "Holds WebSocket connections and fans out new messages to clients.", "tags": ["tech:EC2", "tech:Node", "region:us-west-1", "env:Internal", "risk:High"]}, {"id": "events", "type": "container", "parent": "pulse", "kind": "queue", "name": "Message Events", "technology": "SQS", "description": "Queue of new-message events the real-time service consumes.", "tags": ["tech:SQS", "region:us-west-1"]}, {"id": "db", "type": "container", "parent": "pulse", "kind": "store", "name": "API Database", "technology": "DynamoDB", "description": "Workspaces, channels, messages and memberships.", "tags": ["tech:DynamoDB", "tech:NoSQL", "region:us-west-1", "region:us-east-1", "risk:High"]}, {"id": "api.auth", "type": "component", "parent": "api", "name": "Auth Middleware", "technology": "Express middleware", "description": "Verifies JWTs and loads the caller's memberships.", "tags": ["tech:JWT"]}, {"id": "api.channels", "type": "component", "parent": "api", "name": "Channels Controller", "technology": "Express router", "description": "Create, list and archive channels."}, {"id": "api.messages", "type": "component", "parent": "api", "name": "Messages Controller", "technology": "Express router", "description": "Post and page through messages. Publishes events."}, {"id": "api.repo", "type": "component", "parent": "api", "name": "Repository", "technology": "AWS SDK v3", "description": "All DynamoDB reads and writes behind one interface.", "tags": ["tech:DynamoDB"]}, {"id": "api.mail", "type": "component", "parent": "api", "name": "Mailer", "technology": "AWS SDK v3", "description": "Builds and sends invite emails."}], "relationships": [{"from": "user", "to": "web", "label": "Reads and posts messages", "technology": "HTTPS"}, {"from": "web", "to": "auth0", "label": "Signs in with", "technology": "OIDC / HTTPS"}, {"from": "web", "to": "api.channels", "label": "Manages channels", "technology": "JSON / HTTPS"}, {"from": "web", "to": "api.messages", "label": "Posts and loads messages", "technology": "JSON / HTTPS"}, {"from": "web", "to": "rt", "label": "Subscribes to channel updates", "technology": "WebSocket"}, {"from": "api.auth", "to": "auth0", "label": "Fetches signing keys", "technology": "JWKS / HTTPS"}, {"from": "api.channels", "to": "api.repo", "label": "Reads and writes channels"}, {"from": "api.messages", "to": "api.repo", "label": "Reads and writes messages"}, {"from": "api.messages", "to": "events", "label": "Publishes new-message events", "technology": "SQS"}, {"from": "api.repo", "to": "db", "label": "Reads from and writes to", "technology": "DynamoDB API"}, {"from": "api.mail", "to": "ses", "label": "Sends invite emails", "technology": "SES API"}, {"from": "events", "to": "rt", "label": "Delivers events", "technology": "SQS long poll"}, {"from": "rt", "to": "db", "label": "Reads channel membership", "technology": "DynamoDB API"}]};
 const VIEW = /*__VIEW__*/{"level": "component", "container": "api", "componentPages": ["api"]};
 
+/* @shared:begin model.js (edit shared/model.js, then run tools/stamp.py) */
+// Helpers over the C4 model. Needs `const MODEL` above it.
 const ICON = {
   person: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>',
   system: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>',
@@ -130,7 +173,7 @@ const ICON = {
   component: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="4" width="14" height="7" rx="1.5"/><rect x="7" y="13" width="14" height="7" rx="1.5"/><path d="M3 7.5h4M3 16.5h4"/></svg>',
   lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>',
   zoom: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5M11 8v6M8 11h6"/></svg>',
-  // chip category icons
+  // tag category icons
   tech: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg>',
   region: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>',
   env: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5"/></svg>',
@@ -141,6 +184,54 @@ const ICON = {
 const TYPE_LABEL = { person: "Person", system: "Software System", container: "Container", component: "Component" };
 const KIND_LABEL = { person: "Person", system: "Software System", external: "External System", app: "Application",
   web: "Web App", mobile: "Mobile App", store: "Data Store", queue: "Queue / Topic", function: "Function", component: "Component" };
+
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const els = MODEL.elements || [];
+const byId = Object.fromEntries(els.map(e => [e.id, e]));
+const system = els.find(e => e.type === "system" && !e.external) || { id: "system", name: MODEL.project || "System" };
+const kindOf = e => e.type === "person" ? "person" : e.type === "system" ? (e.external ? "external" : "system")
+  : e.type === "component" ? "component" : (e.kind || "app");
+const nameOf = id => (byId[id] || { name: id }).name;
+// data-tip holds the tooltip's HTML. Build it from escaped text; tipAttr escapes it once more for the attribute.
+const tipAttr = html => html ? ` data-tip="${esc(html)}"` : "";
+const elementTip = id => { const e = byId[id]; return e ? `<b>${esc(e.name)}</b><div class="t">[${esc(TYPE_LABEL[e.type] + (e.technology ? ": " + e.technology : ""))}]</div>${e.description ? `<div>${esc(e.description)}</div>` : ""}` : ""; };
+
+// Roll an endpoint up to the abstraction a view shows. A relationship recorded against a
+// component is still a relationship of its container at the container level.
+// `container` is the one a component view looks inside; its own components stay as they are.
+function rollUp(id, level, container) {
+  let e = byId[id]; if (!e) return id;
+  if (level === "context") { while (e && (e.type === "component" || e.type === "container")) e = byId[e.parent]; return e ? e.id : system.id; }
+  if (level === "container") { if (e.type === "component") return e.parent; }
+  if (level === "component") { if (e.type === "component" && e.parent !== container) return e.parent; }
+  return e.id;
+}
+
+// Collapse relationships to a level and merge duplicates between the same pair.
+function mergeFlows(level, container) {
+  const merged = new Map();
+  for (const r of MODEL.relationships || []) {
+    const from = rollUp(r.from, level, container), to = rollUp(r.to, level, container);
+    if (from === to) continue;
+    const k = from + "→" + to, m = merged.get(k) || { from, to, labels: [], techs: [] };
+    if (r.label && !m.labels.includes(r.label)) m.labels.push(r.label);
+    if (r.technology && !m.techs.includes(r.technology)) m.techs.push(r.technology);
+    merged.set(k, m);
+  }
+  return [...merged.values()];
+}
+
+const chip = (cls, text, icon, tip) => `<span class="chip ${cls}"${tipAttr(tip)}>${icon ? ICON[icon] || "" : ""}${esc(text)}</span>`;
+// A tag is "category:value"; an unknown category draws as "other" and says its category when pointed at.
+const TAG_LABEL = { tech: "Technology", region: "Region", env: "Environment", team: "Team", risk: "Risk", other: "Tag" };
+const tagChip = tag => {
+  const [cat, ...rest] = String(tag).includes(":") ? String(tag).split(":") : ["other", tag], c = ICON[cat] ? cat : "other", value = rest.join(":").trim();
+  return chip(c, value, c, `<b>${esc(TAG_LABEL[cat] || cat[0].toUpperCase() + cat.slice(1))}</b><div>${esc(value)}</div>`);
+};
+/* @shared:end model.js */
+/* @shared:begin diagram.js (edit shared/diagram.js, then run tools/stamp.py) */
+// The diagram engine: diagram(host, view) draws one C4 view into any element, as many per page as wanted.
+// Needs the model helpers above it. view is {"level":"container"} or {"level":"component","container":"api"}.
 const LEVELS = {
   context: { title: "System Context diagram", scope: "The whole software system", primary: "The software system",
     supporting: "People and external systems that use or are used by it", audience: "Everyone, technical or not" },
@@ -149,64 +240,37 @@ const LEVELS = {
   component: { title: "Component diagram", scope: "Inside one container", primary: "Components of that container",
     supporting: "Containers, people and systems they talk to", audience: "Developers and architects" }
 };
+// Paper: lay the diagram out at `layout` px, where the side column fits, then scale it to `fit` px (A4 inside 12mm margins).
+const PRINT = { layout: 1180, fit: 700 };
 
-const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const els = MODEL.elements || [];
-const byId = Object.fromEntries(els.map(e => [e.id, e]));
-const system = els.find(e => e.type === "system" && !e.external) || { id: "system", name: MODEL.project || "System" };
-const parentOf = id => byId[id] && byId[id].parent;
-const kindOf = e => e.type === "person" ? "person" : e.type === "system" ? (e.external ? "external" : "system")
-  : e.type === "component" ? "component" : (e.kind || "app");
-
-// Roll an endpoint up to the abstraction this view shows. A relationship recorded
-// against a component is still a relationship of its container at the container level.
-function rollUp(id, level) {
-  let e = byId[id]; if (!e) return id;
-  if (level === "context") { while (e && (e.type === "component" || e.type === "container")) e = byId[e.parent]; return e ? e.id : system.id; }
-  if (level === "container") { if (e.type === "component") return e.parent; }
-  if (level === "component") { if (e.type === "component" && e.parent !== VIEW.container) return e.parent; }
-  return e.id;
-}
-
-// Decide what this page shows: people on top, the boundary in the middle, supporting systems at the side.
-function buildView() {
-  const level = VIEW.level || "context";
+// Decide what a view shows: people on top, the boundary in the middle, supporting systems at the side.
+function buildView(view) {
+  const level = view.level || "context";
   const people = els.filter(e => e.type === "person");
   const externals = els.filter(e => e.type === "system" && e.external);
-  let inside, boundary, side, crumbs;
+  const subject = byId[view.container] || {};
+  let inside, boundary, side;
   if (level === "context") {
     inside = [system]; boundary = null; side = externals;
   } else if (level === "container") {
     inside = els.filter(e => e.type === "container" && e.parent === system.id);
     boundary = { label: system.name, type: "Software System" }; side = externals;
   } else {
-    const c = byId[VIEW.container] || {};
-    inside = els.filter(e => e.type === "component" && e.parent === c.id);
-    boundary = { label: c.name, type: "Container" + (c.technology ? ": " + c.technology : "") };
+    inside = els.filter(e => e.type === "component" && e.parent === subject.id);
+    boundary = { label: subject.name, type: "Container" + (subject.technology ? ": " + subject.technology : "") };
     side = [];  // filled below: only the neighbours that actually connect to a component
   }
-  // Collapse relationships to this level and merge duplicates between the same pair.
-  const merged = new Map();
-  for (const r of MODEL.relationships || []) {
-    const from = rollUp(r.from, level), to = rollUp(r.to, level);
-    if (from === to) continue;
-    if (level === "component") { const ins = new Set(inside.map(e => e.id)); if (!ins.has(from) && !ins.has(to)) continue; }
-    const k = from + "→" + to, m = merged.get(k) || { from, to, labels: [], techs: [] };
-    if (r.label && !m.labels.includes(r.label)) m.labels.push(r.label);
-    if (r.technology && !m.techs.includes(r.technology)) m.techs.push(r.technology);
-    merged.set(k, m);
-  }
-  let edges = [...merged.values()];
+  const ins = new Set(inside.map(e => e.id));
+  let edges = mergeFlows(level, view.container).filter(e => level !== "component" || ins.has(e.from) || ins.has(e.to));
   if (level === "component") {
-    const ins = new Set(inside.map(e => e.id)), seen = new Set();
+    const seen = new Set();
     for (const e of edges) for (const id of [e.from, e.to]) if (!ins.has(id) && byId[id] && !seen.has(id)) { seen.add(id); if (byId[id].type !== "person") side.push(byId[id]); }
-    crumbs = `<a href="index.html">Index</a> › <a href="container.html">Containers</a> › ${esc(c(VIEW.container).name)}`;
-  } else crumbs = `<a href="index.html">Index</a> › ${esc(LEVELS[level].title)}`;
+  }
   const visible = new Set([...people, ...inside, ...side].map(e => e.id));
   edges = edges.filter(e => visible.has(e.from) && visible.has(e.to));
   const peopleShown = people.filter(p => level === "context" || edges.some(e => e.from === p.id || e.to === p.id));
-  return { level, people: peopleShown, inside, boundary, side, edges, crumbs };
-  function c(id) { return byId[id] || { name: id }; }
+  const name = level === "component" ? subject.name : system.name;
+  return { level, name, title: `${LEVELS[level].title}: ${name}`, people: peopleShown, inside, boundary, side, edges };
 }
 
 // Rank the inside elements into layers so arrows mostly flow downward: entry points first.
@@ -223,78 +287,81 @@ function layers(inside, edges) {
   const out = []; inside.forEach(e => (out[rank.get(e.id)] ||= []).push(e)); return out.filter(Boolean);
 }
 
-function chip(tag) {
-  const [cat, ...rest] = String(tag).includes(":") ? String(tag).split(":") : ["other", tag];
-  const c = ICON[cat] ? cat : "other";
-  return `<span class="chip ${c}">${ICON[c]}${esc(rest.join(":").trim())}</span>`;
-}
-function card(e, view) {
+// What a relationship says when it is pointed at: both ends, every intent, the technology.
+const flowTip = e => `<b>${esc(nameOf(e.from))} → ${esc(nameOf(e.to))}</b>${(e.labels.length ? e.labels : ["Uses"]).map(l => `<div>${esc(l)}</div>`).join("")}${e.techs.length ? `<div class="t">${esc(e.techs.join(", "))}</div>` : ""}`;
+
+// view.componentPages lists the containers that have a page of their own to link to.
+function card(e, v, view) {
   const kind = kindOf(e), external = !!e.external;
-  const comps = els.filter(x => x.type === "component" && x.parent === e.id).length;
-  const rels = view.edges.filter(r => r.from === e.id || r.to === e.id).length;
+  const comps = els.filter(x => x.type === "component" && x.parent === e.id);
+  const rels = v.edges.filter(r => r.from === e.id || r.to === e.id);
   const typeLine = TYPE_LABEL[e.type] + (e.technology ? ": " + e.technology : "");
-  const pages = VIEW.componentPages || [];
-  const zoom = comps && e.type === "container" ? `<span class="badge tl" title="${comps} components">${pages.includes(e.id) ? `<a href="component-${esc(e.id)}.html">${ICON.zoom}</a>` : ICON.zoom} ${comps}</span>` : "";
+  const linked = (view.componentPages || []).includes(e.id);
+  const zoomTip = `<b>${comps.length} component${comps.length === 1 ? "" : "s"}</b><div>${esc(comps.map(c => c.name).join(", "))}</div>${linked ? '<div class="t">Click to open its diagram</div>' : ""}`;
+  const zoom = comps.length && e.type === "container" ? `<span class="badge tl"${tipAttr(zoomTip)}>${linked ? `<a href="component-${esc(e.id)}.html">${ICON.zoom}</a>` : ICON.zoom} ${comps.length}</span>` : "";
+  const relTip = `<b>${rels.length} relationship${rels.length === 1 ? "" : "s"} here</b>${rels.map(r => `<div>${r.from === e.id ? "→ " + esc(nameOf(r.to)) : "← " + esc(nameOf(r.from))}: ${esc(r.labels.join(" / ") || "Uses")}</div>`).join("")}`;
   const internal = e.type !== "person" && !external;
   return `<div class="card ${kind}${external ? " external" : ""}" data-id="${esc(e.id)}">
-    ${zoom}<span class="badge tr" title="${rels} relationships on this diagram"><span class="dot"></span>${rels}</span>
+    ${zoom}<span class="badge tr"${tipAttr(relTip)}><span class="dot"></span>${rels.length}</span>
     <div class="head"><div class="tile k-${kind}">${ICON[kind]}</div><div><div class="name">${esc(e.name)}</div><div class="type">[${esc(typeLine)}]</div></div></div>
     ${e.description ? `<div class="desc">${esc(e.description)}</div>` : ""}
-    <div class="foot"><span class="type">${esc(KIND_LABEL[kind])}</span>${internal ? `<span class="lock" title="Inside the system boundary">${ICON.lock}</span>` : ""}</div>
-    ${(e.tags || []).length ? `<div class="chips">${e.tags.map(chip).join("")}</div>` : ""}
+    <div class="foot"><span class="type">${esc(KIND_LABEL[kind])}</span>${internal ? `<span class="lock"${tipAttr("Inside the system boundary")}>${ICON.lock}</span>` : ""}</div>
+    ${(e.tags || []).length ? `<div class="chips">${e.tags.map(tagChip).join("")}</div>` : ""}
   </div>`;
 }
 
-function render() {
-  const v = buildView(), L = LEVELS[v.level];
-  const scopeName = v.level === "component" ? (byId[VIEW.container] || {}).name : system.name;
-  document.title = `${L.title}: ${scopeName}`;
-  document.getElementById("title").textContent = `${L.title}: ${scopeName}`;
-  document.getElementById("subtitle").textContent = (MODEL.project ? MODEL.project + " · " : "") + (MODEL.description || "");
-  document.getElementById("crumbs").innerHTML = v.crumbs;
-  document.getElementById("meta").innerHTML =
-    `<span><b>Scope</b>${esc(L.scope)}</span><span><b>Primary</b>${esc(L.primary)}</span><span><b>Supporting</b>${esc(L.supporting)}</span><span><b>Audience</b>${esc(L.audience)}</span>`;
-  const stage = document.getElementById("stage");
-  const inner = `<div class="layers">${layers(v.inside, v.edges).map(l => `<div class="layer">${l.map(e => card(e, v)).join("")}</div>`).join("")}</div>`;
-  stage.insertAdjacentHTML("beforeend",
-    `<div class="row people">${v.people.map(e => card(e, v)).join("")}</div>
-     <div class="mid${v.side.length ? "" : " no-side"}">
-       ${v.boundary ? `<div class="boundary"><span class="blabel"><b>${esc(v.boundary.label)}</b> [${esc(v.boundary.type)}]</span>${inner}</div>` : `<div class="boundary" style="border:0;background:none;padding:0">${inner}</div>`}
-       ${v.side.length ? `<aside class="side"><div class="slabel">[${v.level === "component" ? "Related" : "External systems"}]</div>${v.side.map(e => card(e, v)).join("")}</aside>` : ""}
-     </div>`);
-  stage.querySelectorAll(".people .card").forEach(c => { c.dataset.zone = "p"; c.dataset.rank = -1; });
-  stage.querySelectorAll(".layer").forEach((l, i) => l.querySelectorAll(".card").forEach(c => { c.dataset.zone = "in"; c.dataset.rank = i; }));
-  stage.querySelectorAll(".side .card").forEach((c, i) => { c.dataset.zone = "s"; c.dataset.rank = i; });
-  renderLegend(v);
-  document.getElementById("footer").textContent = `Generated ${MODEL.generated || new Date().toISOString().slice(0, 10)} · C4 model · ${v.edges.length} relationships`;
-  const draw = () => wires(v.edges);
-  draw(); new ResizeObserver(draw).observe(stage); window.addEventListener("load", draw);
-}
-
-function renderLegend(v) {
+function legend(v) {
   const shown = [...v.people, ...v.inside, ...v.side];
   const kinds = [...new Set(shown.map(kindOf))];
   const cats = [...new Set(shown.flatMap(e => (e.tags || []).map(t => String(t).includes(":") ? t.split(":")[0] : "other")))];
-  document.getElementById("legend").innerHTML = `<h2>Key</h2><div class="items">
+  return `<h2>Key</h2><div class="items">
     ${kinds.map(k => `<span><span class="tile k-${k}">${ICON[k]}</span>${esc(KIND_LABEL[k])}</span>`).join("")}
     ${v.boundary ? `<span><span style="display:inline-block;width:22px;height:14px;border:1.5px dashed var(--boundary-line);background:var(--boundary);border-radius:3px;vertical-align:middle;margin-right:5px"></span>${esc(v.boundary.type.split(":")[0])} boundary</span>` : ""}
     <span><span class="arrow"></span>Relationship: intent [technology]</span>
     <span>${ICON.lock.replace("<svg", '<svg style="width:13px;height:13px;vertical-align:middle;color:#9aa5b4;margin-right:4px"')}Inside the boundary</span>
     ${cats.map(c => `<span class="chip ${ICON[c] ? c : "other"}">${ICON[ICON[c] ? c : "other"]}${esc(c)} tag</span>`).join("")}
+    <span class="hint">Point at a line or a card to trace it</span>
   </div>`;
 }
 
-// Draw orthogonal arrows that stay out of the cards. Wires may only travel:
-//   - along a lane inside a gap between rows (each wire gets its own lane, so labels never collide),
-//   - down a column that was checked to be free of cards,
-//   - or in the corridor between the boundary and the side column.
+// A label is measured before it is drawn, so the router can give it room.
+const ruler = document.createElement("canvas").getContext("2d");
+function wrapText(text, max) {
+  const out = []; let line = "";
+  for (const word of String(text).split(/\s+/)) { if (line && (line + " " + word).length > max) { out.push(line); line = word; } else line = line ? line + " " + word : word; }
+  if (line) out.push(line); return out;
+}
+function labelOf(e, family, max) {
+  const lines = (e.labels.length ? e.labels : ["Uses"]).flatMap(l => wrapText(l, max)).map(t => ({ t }));
+  if (e.techs.length) wrapText("[" + e.techs.join(", ") + "]", max + 4).forEach(t => lines.push({ t, tech: true }));
+  let w = 0; for (const l of lines) { ruler.font = `${l.tech ? 10 : 11}px ${family}`; w = Math.max(w, ruler.measureText(l.t).width); }
+  return { lines, w: Math.ceil(w) + 14, h: lines.length * 12 + 8 };
+}
+// An orthogonal path through the points, with its corners rounded.
+function rounded(points, r = 7) {
+  const p = points.filter((q, i) => !i || Math.abs(q[0] - points[i - 1][0]) > 0.5 || Math.abs(q[1] - points[i - 1][1]) > 0.5);
+  let d = `M${p[0]}`;
+  for (let i = 1; i < p.length - 1; i++) {
+    const [x0, y0] = p[i - 1], [x1, y1] = p[i], [x2, y2] = p[i + 1];
+    const c = Math.min(r, Math.hypot(x1 - x0, y1 - y0) / 2, Math.hypot(x2 - x1, y2 - y1) / 2);
+    d += `L${x1 - Math.sign(x1 - x0) * c},${y1 - Math.sign(y1 - y0) * c}Q${x1},${y1} ${x1 + Math.sign(x2 - x1) * c},${y1 + Math.sign(y2 - y1) * c}`;
+  }
+  return d + `L${p[p.length - 1]}`;
+}
+
+// Route every relationship as an orthogonal wire that stays out of the cards, then draw it.
+//   - Each wire leaves and enters a card at a port of its own, so two wires never share a stub.
+//   - Between rows a wire runs along a lane in the gap; wires that do not overlap share a lane.
+//   - A wire to the side column runs down a track of its own in the corridor, and its label sits beside the card it points to.
 // Rows come from where cards actually landed, so wrapped layers and phone widths still work.
-function wires(edges) {
-  const svg = document.getElementById("wires"), stage = document.getElementById("stage");
-  const s = stage.getBoundingClientRect();
-  const rel = el => { const r = el.getBoundingClientRect(); return { l: r.left - s.left, t: r.top - s.top, r: r.right - s.left, b: r.bottom - s.top, cx: (r.left + r.right) / 2 - s.left, cy: (r.top + r.bottom) / 2 - s.top }; };
+// Returns false when it made room (a taller gap, a wider corridor) instead of drawing: call it again until it returns true.
+function wires(stage, edges, n) {
+  const svg = stage.querySelector(".wires"), mid = stage.querySelector(".mid");
+  const s = stage.getBoundingClientRect(), k = stage.style.zoom ? s.width / stage.offsetWidth : 1;   // k undoes the print zoom
+  const W = s.width / k, family = getComputedStyle(stage).fontFamily;
+  const rel = el => { const r = el.getBoundingClientRect(); return { l: (r.left - s.left) / k, t: (r.top - s.top) / k, r: (r.right - s.left) / k, b: (r.bottom - s.top) / k, cx: ((r.left + r.right) / 2 - s.left) / k, cy: ((r.top + r.bottom) / 2 - s.top) / k }; };
   const cards = [...stage.querySelectorAll(".card")].map(el => ({ id: el.dataset.id, zone: el.dataset.zone, el, ...rel(el) }));
-  const byId = Object.fromEntries(cards.map(c => [c.id, c]));
+  const at = Object.fromEntries(cards.map(c => [c.id, c]));
   const side = cards.filter(c => c.zone === "s"), bound = rel(stage.querySelector(".boundary"));
   const sideLeft = side.length ? Math.min(...side.map(c => c.l)) : 0;
   const corridor = side.length > 0 && sideLeft > bound.r;   // the side column really is at the side
@@ -302,75 +369,209 @@ function wires(edges) {
   const rows = []; cards.filter(c => !(corridor && c.zone === "s")).sort((p, q) => p.t - q.t)
     .forEach(c => { const r = rows[rows.length - 1]; if (r && c.t < r.t + 20) { r.cards.push(c); c.row = rows.length - 1; } else { rows.push({ t: c.t, cards: [c] }); c.row = rows.length - 1; } });
   side.forEach(c => { if (corridor) c.row = -1; });
-  const gapOf = g => ({ top: g ? Math.max(...rows[g - 1].cards.map(c => c.b)) : 0, bottom: g < rows.length ? Math.min(...rows[g].cards.map(c => c.t)) : Math.max(...rows[g - 1].cards.map(c => c.b)) + 80 });
-  const lanes = {}, need = {};
-  const laneY = g => { const gap = gapOf(g), i = (lanes[g] = (lanes[g] ?? -1) + 1); need[g] = 30 + (i + 1) * 30; return Math.min(gap.top + 20 + i * 30, gap.bottom - 12); };
-  let corr = 0; const corrX = () => sideLeft - 120 + (corr++ % 8) * 14;
-  const usedX = [];
-  const freeX = (x, y1, y2) => {   // nearest column to x that crosses no card between y1 and y2
-    const lo = Math.min(y1, y2), hi = Math.max(y1, y2);
-    const ok = v => v > 2 && v < s.width - 2 && !cards.some(c => v > c.l - 4 && v < c.r + 4 && c.b > lo && c.t < hi);
-    const fresh = v => ok(v) && !usedX.some(u => Math.abs(u - v) < 8);
-    const v = [x, ...cards.flatMap(c => [14, 26, 38].flatMap(d => [c.l - d, c.r + d]))].filter(fresh).sort((p, q) => Math.abs(p - x) - Math.abs(q - x))[0] ?? x;
-    usedX.push(v); return v;
-  };
-  const rightMost = a => a.row >= 0 && !rows[a.row].cards.some(c => c !== a && c.l > a.r);
-  const groups = {}; edges.forEach(e => { const k = [e.from, e.to].sort().join("|"); (groups[k] ||= []).push(e); });
-  let out = `<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7a8798"/></marker></defs>`;
-  const labels = [];
-  for (const e of edges) {
-    const a = byId[e.from], b = byId[e.to]; if (!a || !b) continue;
-    const g = groups[[e.from, e.to].sort().join("|")], off = (g.indexOf(e) - (g.length - 1) / 2) * 18;
-    let pts, lx, ly;
-    if (corridor && (a.row < 0 || b.row < 0)) {
-      const cx = corrX();
-      const direct = (p, q, edgeX) => { pts = [[edgeX(p), p.cy + off], [cx, p.cy + off], [cx, q.cy + off], [edgeX(q), q.cy + off]];
-        if (Math.abs(p.cy - q.cy) > 70) { lx = cx; ly = (p.cy + q.cy) / 2; } else { lx = (edgeX(p) + cx) / 2; ly = p.cy + off - 16; } };
-      if (a.row < 0 && b.row < 0) direct(a, b, c => c.l);
-      else if (b.row < 0) {
-        if (rightMost(a)) direct(a, b, c => c === a ? c.r : c.l);
-        else { const y = laneY(a.row + 1); pts = [[a.cx + off, a.b], [a.cx + off, y], [cx, y], [cx, b.cy + off], [b.l, b.cy + off]]; lx = (a.cx + cx) / 2; ly = y; }
-      } else {
-        if (rightMost(b)) direct(a, b, c => c === b ? c.r : c.l);
-        else { const y = laneY(b.row); pts = [[a.l, a.cy + off], [cx, a.cy + off], [cx, y], [b.cx + off, y], [b.cx + off, b.t]]; lx = (b.cx + cx) / 2; ly = y; }
+  if (!rows.length) { svg.innerHTML = ""; return true; }
+  const last = rows[rows.length - 1].cards[0].el.closest(".boundary") ? bound.b : s.height / k;   // where the space under the last row ends
+  const gapOf = g => ({ top: g ? Math.max(...rows[g - 1].cards.map(c => c.b)) : 0, bottom: g < rows.length ? Math.min(...rows[g].cards.map(c => c.t)) : last - 6 });
+  const rightMost = c => c.zone === "in" && !rows[c.row].cards.some(o => o !== c && o.l > c.r);
+  const inside = x => !corridor || x < bound.r - 6;   // a column wires may run down: never the corridor's
+  const clear = (x, y1, y2) => !cards.some(c => x > c.l - 8 && x < c.r + 8 && c.b > Math.min(y1, y2) && c.t < Math.max(y1, y2));
+  const fit = (x, w) => Math.max(w / 2 + 4, Math.min(x, W - w / 2 - 4));
+
+  // 1. Plan each wire: its shape, and the side of each card it uses.
+  const plans = [];
+  edges.forEach((e, i) => {
+    const a = at[e.from], b = at[e.to]; if (!a || !b) return;
+    const p = { i, e, a, b }, sa = a.row < 0, sb = b.row < 0;
+    if (sa || sb) {
+      p.shape = "side"; p.sideA = p.sideB = "l"; p.keyA = b.cy; p.keyB = a.cy;
+      if (!(sa && sb)) {
+        const inner = sa ? b : a, end = sa ? "B" : "A";
+        p.inner = inner; p.direct = rightMost(inner);
+        const up = !p.direct && inner.row === rows.length - 1 && inner.row > 0;   // the last row has no gap under it
+        p["side" + end] = p.direct ? "r" : up ? "t" : "b"; p["key" + end] = p.direct ? (sa ? a : b).cy : Infinity;
+        p.gap = up ? inner.row : inner.row + 1;
       }
-    } else if (b.row > a.row) {   // downwards: lane below a, then (if far) a free column and a lane above b
-      const y = laneY(a.row + 1);
-      if (b.row === a.row + 1) { pts = [[a.cx + off, a.b], [a.cx + off, y], [b.cx + off, y], [b.cx + off, b.t]]; lx = (a.cx + b.cx) / 2; }
-      else { const y2 = laneY(b.row), fx = freeX(b.cx, y, y2); pts = [[a.cx + off, a.b], [a.cx + off, y], [fx, y], [fx, y2], [b.cx + off, y2], [b.cx + off, b.t]]; lx = (a.cx + fx) / 2; }
-      ly = y;
-    } else if (b.row < a.row) {   // upwards: mirror image
-      const y = laneY(a.row);
-      if (b.row === a.row - 1) { pts = [[a.cx + off, a.t], [a.cx + off, y], [b.cx + off, y], [b.cx + off, b.b]]; lx = (a.cx + b.cx) / 2; }
-      else { const y2 = laneY(b.row + 1), fx = freeX(b.cx, y2, y); pts = [[a.cx + off, a.t], [a.cx + off, y], [fx, y], [fx, y2], [b.cx + off, y2], [b.cx + off, b.b]]; lx = (a.cx + fx) / 2; }
-      ly = y;
-    } else {                      // same row: hop over the top
-      const y = laneY(a.row); pts = [[a.cx + off, a.t], [a.cx + off, y], [b.cx + off, y], [b.cx + off, b.t]]; lx = (a.cx + b.cx) / 2; ly = y;
+    } else if (a.row === b.row) {
+      const under = a.row === 0;   // nothing is above the first row to hop over
+      p.shape = "hop"; p.sideA = p.sideB = under ? "b" : "t"; p.keyA = b.cx; p.keyB = a.cx; p.gap = under ? 1 : a.row;
+    } else {
+      p.shape = "run"; p.down = b.row > a.row; p.sideA = p.down ? "b" : "t"; p.sideB = p.down ? "t" : "b"; p.keyA = b.cx; p.keyB = a.cx;
     }
-    out += `<path class="wire" d="M${pts.map(p => p.join(",")).join("L")}" marker-end="url(#arr)"/>`;
-    // Two labels that would sit on top of each other get pushed apart.
-    while (labels.some(l => Math.abs(l.x - lx) < 120 && Math.abs(l.y - ly) < 30)) ly += 32;
-    labels.push({ x: lx, y: ly, text: e.labels.join(" / ") || "Uses", tech: e.techs.join(", ") });
+    p.label = labelOf(e, family, p.shape === "side" ? 24 : 34); p.span = Math.ceil((p.label.h + 4) / 30);
+    plans.push(p);
+  });
+
+  // 2. Ports: the wires on one side of a card spread along it, ordered by where they are heading.
+  const ports = {};
+  for (const p of plans) for (const end of ["A", "B"]) (ports[(end === "A" ? p.a : p.b).id + "|" + p["side" + end]] ||= []).push({ p, end, key: p["key" + end] });
+  for (const name in ports) {
+    const list = ports[name].sort((x, y) => (x.key - y.key) || (x.p.i - y.p.i)), [id, on] = name.split("|"), c = at[id], m = list.length;
+    const set = (q, x, y) => q.p["port" + q.end] = { x, y };
+    if (on === "t" || on === "b") { const step = Math.min(16, (c.r - c.l - 40) / m); list.forEach((q, j) => set(q, c.cx + (j - (m - 1) / 2) * step, on === "t" ? c.t : c.b)); }
+    else if (on === "r") { const step = Math.min(16, (c.b - c.t - 30) / m); list.forEach((q, j) => set(q, c.r, c.cy + (j - (m - 1) / 2) * step)); }
+    else {   // the left edge of a side card: each label sits beside its port, so ports are as far apart as their labels are tall
+      const hs = list.map(q => Math.max(20, q.p.label.h + 8)), total = hs.reduce((x, y) => x + y, 0), squeeze = Math.min(1, (c.b - c.t - 12) / total);
+      let y = c.cy - total * squeeze / 2; list.forEach((q, j) => { set(q, c.l, y + hs[j] * squeeze / 2); y += hs[j] * squeeze; });
+    }
   }
-  // A gap that ran out of lanes grows by exactly what it is short; the ResizeObserver then redraws.
-  for (const g in need) {
-    const gap = gapOf(+g), delta = need[g] - (gap.bottom - gap.top); if (delta <= 1 || +g === 0) continue;
-    const cur = rows[+g].cards[0].el, prev = rows[g - 1].cards[0].el, grow = (el, prop) => el.style[prop] = (parseFloat(getComputedStyle(el)[prop]) || 0) + delta + "px";
-    const pc = cur.closest(".layer, .people, .side"), pp = prev.closest(".layer, .people, .side");
-    if (pc === pp) grow(pc, "rowGap"); else if (pp.classList.contains("people")) grow(pp, "marginBottom"); else if (pc.classList.contains("layer")) grow(pc, "marginTop"); else grow(cur, "marginTop");
-    return;
+
+  // 3. Lanes and columns. A lane is taken for a stretch of x, so wires that do not overlap share one.
+  const lanes = {}, used = {}, columns = [];
+  const lane = (g, x1, x2, span = 1) => {
+    const lo = Math.min(x1, x2) - 8, hi = Math.max(x1, x2) + 8, taken = (lanes[g] ||= []);
+    let i = 0; while (Array.from({ length: span }, (_, j) => taken[i + j] || []).some(row => row.some(([p, q]) => lo < q && hi > p))) i++;
+    for (let j = i; j < i + span; j++) (taken[j] ||= []).push([lo, hi]);
+    used[g] = Math.max(used[g] || 0, i + span);
+    return gapOf(g).top + 20 + i * 30;
+  };
+  // A column is a long vertical run past other rows. It must miss every card, and keeps clear of columns already taken.
+  const open = (x, y1, y2) => x > 6 && x < W - 6 && inside(x) && clear(x, y1, y2);
+  const taken = (x, y1, y2) => columns.some(c => Math.abs(c.x - x) < 10 && c.lo < Math.max(y1, y2) && Math.min(y1, y2) < c.hi);
+  const take = (x, y1, y2) => { columns.push({ x, lo: Math.min(y1, y2), hi: Math.max(y1, y2) }); return x; };
+  const freeX = (x, y1, y2) => {   // the open column nearest x: an untaken one if there is one, never one through a card
+    const tries = [x]; for (let v = 10; v < W - 6; v += 6) tries.push(v);
+    const fits = tries.filter(v => open(v, y1, y2)).sort((p, q) => Math.abs(p - x) - Math.abs(q - x));
+    return take(fits.find(v => !taken(v, y1, y2)) ?? fits[0] ?? x, y1, y2);
+  };
+  const labelled = (p, g, x1, x2) => {   // a lane for the stretch x1..x2 and the label centred on it
+    const lx = fit((x1 + x2) / 2, p.label.w), y = lane(g, Math.min(x1, x2, lx - p.label.w / 2), Math.max(x1, x2, lx + p.label.w / 2), p.span);
+    p.tag = [lx, y + (p.span - 1) * 15]; return y;
+  };
+  for (const p of [...plans].sort((p, q) => Math.abs(p.portA.x - p.portB.x) - Math.abs(q.portA.x - q.portB.x))) {
+    const A = p.portA, B = p.portB;
+    if (p.shape === "hop") { const y = labelled(p, p.gap, A.x, B.x); p.pts = [[A.x, A.y], [A.x, y], [B.x, y], [B.x, B.y]]; }
+    else if (p.shape === "run") {
+      const ga = p.down ? p.a.row + 1 : p.a.row, gb = p.down ? p.b.row : p.b.row + 1;   // the gap beside each end
+      if (Math.abs(A.x - B.x) < 8) B.x = A.x;
+      const y1 = gapOf(Math.min(ga, gb)).top, y2 = gapOf(Math.max(ga, gb)).bottom;   // the rows in between
+      const straight = x => ga !== gb && open(x, y1, y2) && !taken(x, y1, y2) && take(x, y1, y2);   // the long run can go at this end's own port
+      if (ga === gb || straight(B.x)) { const y = labelled(p, ga, A.x, B.x); p.pts = [[A.x, A.y], [A.x, y], [B.x, y], [B.x, B.y]]; }
+      else if (straight(A.x)) { const y = labelled(p, gb, A.x, B.x); p.pts = [[A.x, A.y], [A.x, y], [B.x, y], [B.x, B.y]]; }
+      else { const fx = freeX(B.x, y1, y2), ya = labelled(p, ga, A.x, fx), yb = lane(gb, fx, B.x); p.pts = [[A.x, A.y], [A.x, ya], [fx, ya], [fx, yb], [B.x, yb], [B.x, B.y]]; }
+    } else if (p.inner && !p.direct) p.laneY = lane(p.gap, (p.inner === p.a ? A : B).x, sideLeft);
   }
-  svg.innerHTML = out;
-  for (const l of labels) {
-    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-    g.innerHTML = `<rect class="wlabel-bg"/><text class="wlabel" text-anchor="middle"><tspan x="${l.x}" y="${l.y}">${esc(l.text)}</tspan>${l.tech ? `<tspan class="tech" x="${l.x}" dy="12">[${esc(l.tech)}]</tspan>` : ""}</text>`;
-    svg.appendChild(g);
-    const t = g.querySelector("text").getBBox(), r = g.querySelector("rect");
-    r.setAttribute("x", t.x - 6); r.setAttribute("y", t.y - 3); r.setAttribute("width", t.width + 12); r.setAttribute("height", t.height + 6);
-    g.querySelector("text").setAttribute("transform", `translate(0,${-(t.height / 2) + 8})`); r.setAttribute("transform", `translate(0,${-(t.height / 2) + 8})`);
+
+  // 4. The corridor: one track a wire, ordered so wires to nearby cards do not cross, and labels beside the side cards.
+  const through = plans.filter(p => p.shape === "side");
+  for (const p of through) {
+    const I = p.inner ? (p.inner === p.a ? p.portA : p.portB) : p.portA, X = p.inner ? (p.inner === p.a ? p.portB : p.portA) : p.portB;
+    p.from = I; p.to = X; p.s = p.inner && !p.direct ? p.laneY : I.y; p.t = X.y;
+    p.tag = [sideLeft - 16 - p.label.w / 2, (p.inner ? X : p.portB).y];
   }
+  const labelW = Math.max(0, ...through.map(p => p.label.w));
+  const tracked = through.filter(p => !(p.direct && Math.abs(p.s - p.t) < 1));
+  const order = [...tracked.filter(p => p.t < p.s).sort((p, q) => p.t - q.t), ...tracked.filter(p => p.t >= p.s).sort((p, q) => q.t - p.t)];
+  order.forEach((p, j) => p.track = sideLeft - 28 - labelW - (order.length - 1 - j) * 12);
+  for (const p of through) {
+    const I = p.from, X = p.to, x = p.track;
+    const pts = x === undefined ? [[I.x, I.y], [X.x, X.y]]
+      : !p.inner ? [[I.x, I.y], [x, I.y], [x, X.y], [X.x, X.y]]
+      : p.direct ? [[I.x, I.y], [x, I.y], [x, X.y], [X.x, X.y]]
+      : [[I.x, I.y], [I.x, p.s], [x, p.s], [x, X.y], [X.x, X.y]];
+    p.pts = !p.inner || p.inner === p.a ? pts : pts.reverse();
+  }
+
+  // 5. Room. A gap grows to hold its lanes and the corridor to hold its tracks and labels; the caller then draws again.
+  const grow = (el, prop, by) => el.style[prop] = (parseFloat(getComputedStyle(el)[prop]) || 0) + by + "px";
+  for (const g in used) {
+    const gap = gapOf(+g), short = 30 + used[g] * 30 - (gap.bottom - gap.top); if (short <= 1 || +g === 0) continue;
+    if (+g >= rows.length) grow(rows[rows.length - 1].cards[0].el.closest(".boundary") || stage, "paddingBottom", short);
+    else {
+      const cur = rows[+g].cards[0].el, prev = rows[g - 1].cards[0].el, pc = cur.closest(".layer, .people, .side"), pp = prev.closest(".layer, .people, .side");
+      if (pc === pp) grow(pc, "rowGap", short); else if (pp.classList.contains("people")) grow(pp, "marginBottom", short); else if (pc.classList.contains("layer")) grow(pc, "marginTop", short); else grow(cur, "marginTop", short);
+    }
+    return false;
+  }
+  if (corridor && through.length) {
+    const short = 14 + Math.max(0, order.length - 1) * 12 + 12 + labelW + 16 - (sideLeft - bound.r);
+    if (short > 1) { grow(mid, "columnGap", short); return false; }
+  }
+
+  // 6. Draw: every wire, then every label, so a label is never under a line.
+  const tip = p => tipAttr(flowTip(p.e));
+  svg.innerHTML = `<defs>${["", "on"].map(x => `<marker id="arr${n}${x}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${x ? "#2f6fed" : "#7a8798"}"/></marker>`).join("")}</defs>`
+    + plans.map(p => { const d = rounded(p.pts); return `<g class="w" data-w="${p.i}"${tip(p)}><path class="hit" d="${d}"/><path class="wire" d="${d}" marker-end="url(#arr${n})"/></g>`; }).join("")
+    + plans.map(p => { const [x, y] = p.tag, L = p.label, top = y - L.h / 2;
+        return `<g class="wl" data-w="${p.i}"${tip(p)}><rect class="wlabel-bg" x="${x - L.w / 2}" y="${top}" width="${L.w}" height="${L.h}"/><text class="wlabel" text-anchor="middle">${L.lines.map((l, j) => `<tspan x="${x}" y="${top + 13 + j * 12}"${l.tech ? ' class="tech"' : ""}>${esc(l.t)}</tspan>`).join("")}</text></g>`; }).join("");
+  return true;
 }
-render();
+
+// Draw one view into host and keep its wires right as the host resizes or prints. Returns the view that was drawn.
+let diagrams = 0;
+function diagram(host, view) {
+  const v = buildView(view), n = ++diagrams;
+  host.innerHTML = `<div class="stage"></div><div class="legend">${legend(v)}</div>`;
+  const stage = host.firstChild;
+  const draw = () => { for (let i = 0; i < 80 && !wires(stage, v.edges, n); i++); };
+  const paint = () => {
+    const inner = `<div class="layers">${layers(v.inside, v.edges).map(l => `<div class="layer">${l.map(e => card(e, v, view)).join("")}</div>`).join("")}</div>`;
+    stage.innerHTML = `<svg class="wires"></svg>
+     <div class="row people">${v.people.map(e => card(e, v, view)).join("")}</div>
+     <div class="mid${v.side.length ? "" : " no-side"}">
+       ${v.boundary ? `<div class="boundary"><span class="blabel"><b>${esc(v.boundary.label)}</b> [${esc(v.boundary.type)}]</span>${inner}</div>` : `<div class="boundary" style="border:0;background:none;padding:0">${inner}</div>`}
+       ${v.side.length ? `<aside class="side"><div class="slabel">[${v.level === "component" ? "Related" : "External systems"}]</div>${v.side.map(e => card(e, v, view)).join("")}</aside>` : ""}
+     </div>`;
+    stage.querySelectorAll(".people .card").forEach(c => { c.dataset.zone = "p"; c.dataset.rank = -1; });
+    stage.querySelectorAll(".layer").forEach((l, i) => l.querySelectorAll(".card").forEach(c => { c.dataset.zone = "in"; c.dataset.rank = i; }));
+    stage.querySelectorAll(".side .card").forEach((c, i) => { c.dataset.zone = "s"; c.dataset.rank = i; });
+    stage.classList.remove("focus"); draw();
+  };
+  paint();
+  // A new width is a new layout, so the stage is laid out afresh; anything else only needs its wires again.
+  let width = stage.offsetWidth;
+  new ResizeObserver(() => { if (stage.offsetWidth !== width) { width = stage.offsetWidth; paint(); } else draw(); }).observe(stage);
+  addEventListener("load", draw);
+  // Wires are measured from the layout on screen, so before printing the stage takes its paper layout and is drawn again.
+  addEventListener("beforeprint", () => { stage.style.width = PRINT.layout + "px"; stage.style.zoom = PRINT.fit / PRINT.layout; paint(); });
+  addEventListener("afterprint", () => { stage.style.width = stage.style.zoom = ""; paint(); });
+
+  // Pointing at a wire lights it and its two ends; pointing at a card lights everything it talks to.
+  const light = hot => {
+    const on = new Set(hot), ends = new Set(hot.flatMap(i => [v.edges[i].from, v.edges[i].to]));
+    stage.classList.toggle("focus", on.size > 0);
+    stage.querySelectorAll("[data-w]").forEach(g => {
+      const lit = on.has(+g.dataset.w), line = g.querySelector(".wire"); g.classList.toggle("on", lit);
+      if (line) line.setAttribute("marker-end", `url(#arr${n}${lit ? "on" : ""})`);
+    });
+    stage.querySelectorAll(".card").forEach(c => c.classList.toggle("on", ends.has(c.dataset.id)));
+  };
+  stage.addEventListener("pointerover", e => {
+    const wire = e.target.closest("[data-w]"), box = e.target.closest(".card");
+    light(wire ? [+wire.dataset.w] : box ? v.edges.flatMap((x, i) => x.from === box.dataset.id || x.to === box.dataset.id ? [i] : []) : []);
+  });
+  stage.addEventListener("pointerleave", () => light([]));
+  return v;
+}
+/* @shared:end diagram.js */
+/* @shared:begin tip.js (edit shared/tip.js, then run tools/stamp.py) */
+// One tooltip for the page. Anything carrying data-tip shows it while the pointer is over it.
+(() => {
+  const tip = document.body.appendChild(Object.assign(document.createElement("div"), { className: "tip", hidden: true }));
+  let over = null;
+  const hide = () => { over = null; tip.hidden = true; };
+  addEventListener("pointermove", e => {
+    const el = e.target.closest ? e.target.closest("[data-tip]") : null;
+    if (el !== over) { over = el; tip.hidden = !el; if (el) tip.innerHTML = el.dataset.tip; }
+    if (!el) return;
+    const w = tip.offsetWidth, h = tip.offsetHeight;   // beside the pointer, kept inside the window
+    tip.style.left = Math.max(8, Math.min(e.clientX + 14, innerWidth - w - 8)) + "px";
+    tip.style.top = (e.clientY + 18 + h > innerHeight ? e.clientY - h - 10 : e.clientY + 18) + "px";
+  });
+  addEventListener("scroll", hide, true); addEventListener("beforeprint", hide);
+  document.documentElement.addEventListener("pointerleave", hide);
+})();
+/* @shared:end tip.js */
+
+// The page around the diagram: title, where it sits among the other pages, what it covers and for whom.
+const shown = diagram(document.getElementById("diagram"), VIEW), L = LEVELS[shown.level];
+document.title = shown.title;
+document.getElementById("title").textContent = shown.title;
+document.getElementById("subtitle").textContent = (MODEL.project ? MODEL.project + " · " : "") + (MODEL.description || "");
+document.getElementById("crumbs").innerHTML = `<a href="index.html">Index</a> › ` + (shown.level === "component"
+  ? `<a href="container.html">Containers</a> › ${esc(shown.name || VIEW.container)}` : esc(L.title));
+document.getElementById("meta").innerHTML =
+  `<span><b>Scope</b>${esc(L.scope)}</span><span><b>Primary</b>${esc(L.primary)}</span><span><b>Supporting</b>${esc(L.supporting)}</span><span><b>Audience</b>${esc(L.audience)}</span>`;
+document.getElementById("footer").textContent = `Generated ${MODEL.generated || new Date().toISOString().slice(0, 10)} · C4 model · ${shown.edges.length} relationships`;
 </script>
 </body>
 </html>

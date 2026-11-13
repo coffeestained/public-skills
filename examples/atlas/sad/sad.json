@@ -1,0 +1,243 @@
+{
+  "type": "sad",
+  "subject": "atlas",
+  "status": "draft",
+  "version": "0.1",
+  "generated": "2026-11-12",
+  "owner": "Atlas platform team",
+  "summary": "Atlas renders weather frames ahead of time and serves them as files that never change. That one choice sets the rest: a scheduled worker that writes, a small read-only API, and a CDN in front of both.",
+  "sections": [
+    {
+      "id": "drivers",
+      "blocks": [
+        {
+          "kind": "list",
+          "items": [
+            "No accounts and no personal data: nothing to protect per user, everything cacheable.",
+            "Traffic follows the weather: quiet for weeks, then ten times normal for a day.",
+            "The source data arrives hourly, so nothing needs to be fresher than that.",
+            "A small team: managed services over servers to patch."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "quality-goals",
+      "blocks": [
+        {
+          "kind": "table",
+          "columns": [
+            "Attribute",
+            "Target",
+            "How it is met"
+          ],
+          "rows": [
+            [
+              "Freshness",
+              "Newest frame at most 70 minutes old",
+              "Hourly ingest; an alarm on the age of the current run"
+            ],
+            [
+              "Latency",
+              "A frame in under 200 ms, 95th percentile",
+              "Unchanging files on the CDN; a cache hit needs no origin"
+            ],
+            [
+              "Availability",
+              "The map loads 99.9% of the month",
+              "Cached frames survive an API or ingest outage"
+            ],
+            [
+              "Cost",
+              "Flat when idle, linear on storm days",
+              "Lambda and the CDN bill per request; ingest is one task an hour"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "decisions",
+      "blocks": [
+        {
+          "kind": "decisions",
+          "items": [
+            {
+              "id": "D1",
+              "title": "Render frames on a schedule, never per request",
+              "decision": "The Ingest Worker draws every frame once per model run.",
+              "why": "Rendering is heavy and the data changes hourly, so work per request would buy nothing.",
+              "alternatives": "A tile server that renders on demand.",
+              "elements": [
+                "ingest",
+                "frames"
+              ]
+            },
+            {
+              "id": "D2",
+              "title": "Run-stamped keys that never change",
+              "decision": "Each run writes under its own prefix; the catalog points at the current one.",
+              "why": "No cache invalidation, and rolling back is one pointer change.",
+              "alternatives": "Overwriting fixed keys and purging the CDN.",
+              "elements": [
+                "frames",
+                "catalog",
+                "cdn"
+              ]
+            },
+            {
+              "id": "D3",
+              "title": "Ingest beside the source",
+              "decision": "Run in the same region as NOAA's public buckets.",
+              "why": "The download is the largest transfer in the system; a same-region read is fast and carries no transfer charge.",
+              "alternatives": "The region closest to most viewers.",
+              "elements": [
+                "ingest",
+                "noaa"
+              ]
+            },
+            {
+              "id": "D4",
+              "title": "Fargate for ingest, Lambda for the API",
+              "decision": "A container task for the hourly render; functions for requests.",
+              "why": "The render is long and memory-heavy; requests are short and arrive in bursts.",
+              "alternatives": "One always-on service for both.",
+              "elements": [
+                "ingest",
+                "api"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "software",
+      "blocks": [
+        {
+          "kind": "elements",
+          "of": "containers"
+        },
+        {
+          "kind": "elements",
+          "of": "externals"
+        },
+        {
+          "kind": "flows"
+        },
+        {
+          "kind": "text",
+          "text": "Seven containers and three external systems. Only the Ingest Worker writes."
+        }
+      ]
+    },
+    {
+      "id": "infrastructure",
+      "blocks": [
+        {
+          "kind": "table",
+          "columns": [
+            "Container",
+            "Runs on",
+            "Where",
+            "Sizing"
+          ],
+          "rows": [
+            [
+              "Web App",
+              "S3 static site behind CloudFront",
+              "us-east-1, edge",
+              "Static files"
+            ],
+            [
+              "Mobile App",
+              "App Store, Google Play",
+              "Devices",
+              "One build per platform"
+            ],
+            [
+              "Edge CDN",
+              "CloudFront",
+              "Global edge",
+              "Two origins: frames and API"
+            ],
+            [
+              "API",
+              "API Gateway, Lambda",
+              "us-east-1",
+              "256 MB, 3 s timeout"
+            ],
+            [
+              "Ingest Worker",
+              "ECS Fargate task, EventBridge rule",
+              "us-east-1",
+              "2 vCPU, 8 GB, hourly"
+            ],
+            [
+              "Frame Store",
+              "S3",
+              "us-east-1",
+              "Runs expire after 48 hours"
+            ],
+            [
+              "Frame Catalog",
+              "DynamoDB on-demand",
+              "us-east-1",
+              "One table"
+            ]
+          ]
+        },
+        {
+          "kind": "text",
+          "text": "Two environments, staging and production, each an account of its own, created from the same infrastructure code."
+        }
+      ]
+    },
+    {
+      "id": "shared-concerns",
+      "blocks": [
+        {
+          "kind": "table",
+          "columns": [
+            "Concern",
+            "Approach"
+          ],
+          "rows": [
+            [
+              "Security",
+              "No user data. The bucket is private and only the CDN reads it. Each role may touch only its own resources."
+            ],
+            [
+              "Observability",
+              "Structured logs, one dashboard, alarms on run age, API errors and ingest failures."
+            ],
+            [
+              "Configuration",
+              "Environment variables set by infrastructure code. No secrets: every upstream is public."
+            ],
+            [
+              "Data lifecycle",
+              "Frames expire after 48 hours; catalog items carry a time-to-live."
+            ],
+            [
+              "Cost",
+              "Reviewed monthly against requests served."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "open-questions",
+      "blocks": [
+        {
+          "kind": "list",
+          "items": [
+            "Whether a second region is worth its cost.",
+            "How long to keep past runs for replay."
+          ]
+        }
+      ]
+    }
+  ]
+}

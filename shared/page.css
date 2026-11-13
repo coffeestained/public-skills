@@ -1,0 +1,60 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+a { color: inherit; }
+header { padding: 22px 24px 6px; }
+header h1 { margin: 0; font-size: 20px; }
+header .sub { color: var(--muted); font-size: 13px; margin-top: 2px; }
+/* Scope / primary / audience: every page says what it covers and for whom. */
+.meta { display: flex; flex-wrap: wrap; gap: 6px 22px; padding: 10px 24px 0; font-size: 12px; color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 600; margin-right: 4px; }
+nav.crumbs { padding: 6px 24px 0; font-size: 12px; color: var(--muted); }
+section { padding: 20px 24px 0; }
+section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 10px; }
+
+table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; font-size: 12.5px; }
+th, td { text-align: left; padding: 8px 10px; border-top: 1px solid #eef1f5; vertical-align: top; }
+th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: #fafbfc; border-top: 0; }
+td .tech { color: var(--muted); font-size: 11px; }
+.wrap { border-radius: 10px; overflow: auto; }
+
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 7px;
+  border-radius: 5px; border: 1px solid; }
+.chip svg { width: 11px; height: 11px; }
+/* One colour per tag category, all readable on white. */
+.chip.tech   { color: #9a4a0b; background: #fff3e8; border-color: #f3c7a0; }
+.chip.region { color: #1d4ed8; background: #eaf0ff; border-color: #b7c7fb; }
+.chip.env    { color: #92400e; background: #fff8e1; border-color: #f2d58a; }
+.chip.team   { color: #166534; background: #ecfdf3; border-color: #a7e3bd; }
+.chip.risk   { color: #b42318; background: #fef3f2; border-color: #f4b6b0; }
+.chip.other  { color: #475467; background: #f2f4f7; border-color: #d0d5dd; }
+/* Severity of a threat, impact of a risk. */
+.chip.critical { color: #fff; background: #b42318; border-color: #b42318; }
+.chip.high { color: #b42318; background: #fef3f2; border-color: #f4b6b0; }
+.chip.medium { color: #92400e; background: #fff8e1; border-color: #f2d58a; }
+.chip.low { color: #166534; background: #ecfdf3; border-color: #a7e3bd; }
+
+/* Tile colours by element kind. Matches the key. */
+.k-person { background: #6c5ce7; } .k-system { background: #2f6fed; } .k-external { background: #6b7280; }
+.k-app { background: #e8822a; } .k-web { background: #1f9ad6; } .k-mobile { background: #1f9ad6; }
+.k-store { background: #3b9c5c; } .k-queue { background: #c99700; } .k-function { background: #d9532b; }
+.k-component { background: #4b7bec; }
+
+/* Key. */
+.legend { margin: 8px 24px 28px; display: inline-block; border: 1px solid var(--line); background: var(--card);
+  border-radius: 10px; padding: 10px 14px; box-shadow: var(--shadow); font-size: 12px; }
+.legend h2 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.legend .items { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+footer { padding: 0 24px 24px; color: var(--muted); font-size: 11px; }
+/* The page's one tooltip. Anything carrying data-tip shows it. */
+[data-tip] { cursor: help; }
+.tip { position: fixed; z-index: 20; max-width: 340px; padding: 8px 10px; border-radius: 8px; background: var(--ink); color: #fff;
+  font-size: 12px; line-height: 1.4; box-shadow: 0 6px 20px rgba(16,24,40,.25); pointer-events: none; }
+.tip b { display: block; margin-bottom: 2px; }
+.tip .t { color: #b8c2d0; font-size: 11px; margin-top: 2px; }
+@media print {
+  :root { --shadow: none; }
+  html, body { background: #fff; }
+  .tip { display: none; }
+  @page { margin: 12mm; }
+}

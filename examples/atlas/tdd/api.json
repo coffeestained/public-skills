@@ -1,0 +1,253 @@
+{
+  "type": "tdd",
+  "subject": "api",
+  "status": "draft",
+  "version": "0.1",
+  "generated": "2026-11-12",
+  "owner": "Atlas platform team",
+  "summary": "The API is a small read-only service. It tells clients which frames are current, answers a forecast for one point, and lists active alerts. It owns no data and writes nothing.",
+  "sections": [
+    {
+      "id": "responsibility",
+      "blocks": [
+        {
+          "kind": "text",
+          "text": "Answers three questions for the clients, from data other containers own."
+        },
+        {
+          "kind": "list",
+          "title": "It does not",
+          "items": [
+            "Render or store frames",
+            "Write to the catalog",
+            "Know who is asking"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "components",
+      "blocks": [
+        {
+          "kind": "diagram",
+          "level": "component"
+        },
+        {
+          "kind": "text",
+          "text": "A router in front of three handlers, with one adapter per upstream."
+        }
+      ]
+    },
+    {
+      "id": "interfaces",
+      "blocks": [
+        {
+          "kind": "flows"
+        },
+        {
+          "kind": "table",
+          "columns": [
+            "Endpoint",
+            "Input",
+            "Output",
+            "Errors"
+          ],
+          "rows": [
+            [
+              "`GET /api/frames`",
+              "`layer`",
+              "The current run and its frame URLs",
+              "`404` unknown layer"
+            ],
+            [
+              "`GET /api/point`",
+              "`lat`, `lon`",
+              "Hourly values for the grid cell",
+              "`400` outside coverage"
+            ],
+            [
+              "`GET /api/alerts`",
+              "`lat`, `lon`",
+              "Active alerts covering the point",
+              "`502` when NWS is down, with `Retry-After`"
+            ]
+          ]
+        },
+        {
+          "kind": "text",
+          "text": "Every response carries `Cache-Control`, so the CDN can answer the next caller."
+        }
+      ]
+    },
+    {
+      "id": "data",
+      "blocks": [
+        {
+          "kind": "table",
+          "columns": [
+            "Item",
+            "Key",
+            "Fields",
+            "Written by"
+          ],
+          "rows": [
+            [
+              "Run",
+              "`layer`, `run`",
+              "status, frame count, published at",
+              "Ingest Worker"
+            ],
+            [
+              "Grid cell",
+              "`cell`, `run`",
+              "hourly values",
+              "Ingest Worker"
+            ]
+          ]
+        },
+        {
+          "kind": "text",
+          "text": "The API reads both and writes neither. Items expire by time-to-live."
+        }
+      ]
+    },
+    {
+      "id": "behaviour",
+      "blocks": [
+        {
+          "kind": "list",
+          "title": "List frames",
+          "ordered": true,
+          "items": [
+            "`router.ts` validates the layer.",
+            "`frames.ts` asks the repository for the newest run whose status is complete.",
+            "It builds one URL per frame from the run's prefix.",
+            "The response is cacheable for 60 seconds."
+          ]
+        },
+        {
+          "kind": "list",
+          "title": "Rules that always hold",
+          "items": [
+            "A run that is not complete is never returned.",
+            "A handler reaches AWS or NWS only through its adapter.",
+            "No request is logged with its coordinates."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "failure-modes",
+      "blocks": [
+        {
+          "kind": "risks",
+          "items": [
+            {
+              "id": "F1",
+              "title": "The catalog has no complete run",
+              "impact": "medium",
+              "mitigation": "Return `503` with `Retry-After`; clients keep the frames they have.",
+              "elements": [
+                "api.frames",
+                "catalog"
+              ]
+            },
+            {
+              "id": "F2",
+              "title": "NWS is slow or down",
+              "impact": "medium",
+              "mitigation": "A two-second timeout, then `502`; frames and forecasts are unaffected.",
+              "elements": [
+                "api.nws",
+                "nws"
+              ]
+            },
+            {
+              "id": "F3",
+              "title": "A cold start adds latency",
+              "impact": "low",
+              "mitigation": "Most calls are answered by the CDN, and the function stays small so it starts fast.",
+              "elements": [
+                "api.router"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "testing",
+      "blocks": [
+        {
+          "kind": "table",
+          "columns": [
+            "Tier",
+            "Covers",
+            "Command"
+          ],
+          "rows": [
+            [
+              "Unit",
+              "Handlers against fake adapters",
+              "`npm test`"
+            ],
+            [
+              "Integration",
+              "The repository against DynamoDB Local",
+              "`npm run test:int`"
+            ],
+            [
+              "Contract",
+              "Responses against the published schema",
+              "`npm run test:contract`"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "operations",
+      "blocks": [
+        {
+          "kind": "table",
+          "columns": [
+            "What",
+            "Where"
+          ],
+          "rows": [
+            [
+              "Configuration",
+              "`CATALOG_TABLE`, `FRAMES_BASE_URL`, `NWS_BASE_URL`"
+            ],
+            [
+              "Deploy",
+              "Infrastructure code on merge to main, staging first"
+            ],
+            [
+              "Watch",
+              "Error rate, latency at the 95th percentile, age of the current run"
+            ]
+          ]
+        },
+        {
+          "kind": "list",
+          "title": "Runbooks",
+          "items": [
+            "Roll back a run: point the catalog at the previous one."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "open-questions",
+      "blocks": [
+        {
+          "kind": "list",
+          "items": [
+            "Whether point forecasts should be precomputed for large cities."
+          ]
+        }
+      ]
+    }
+  ]
+}
